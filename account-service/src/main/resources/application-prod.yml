@@ -23,7 +23,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://140.143.144.152:3306/account_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
-    password: 123456
+    password: 207710cwl
     hikari:
       max-lifetime: 300000         # 5分钟，单位毫秒
       connection-timeout: 30000

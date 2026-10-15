@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+
 import java.util.List;
 import java.util.Set;
 
@@ -54,6 +56,14 @@ public class CustomExceptionHandler {
         return JsonData.buildCodeAndMsg(1,"参数校验失败");
     }
 
+    /**
+     * 资源未找到异常处理
+     */
+    @ExceptionHandler(value = NoResourceFoundException.class)
+    public JsonData handleNoResourceFoundException(NoResourceFoundException e) {
+        log.warn("[资源未找到] path: {}", e.getResourcePath());
+        return JsonData.buildCodeAndMsg(404, "资源未找到");
+    }
 
     /**
      * @RequestParam/@PathVariable单个参数校验异常
@@ -77,5 +87,6 @@ public class CustomExceptionHandler {
         log.error("[系统异常]", e);
         return JsonData.buildError("系统异常，请稍后重试");
     }
+
 
 }

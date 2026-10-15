@@ -1,0 +1,22 @@
+package net.xdclass.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class SendSmsDTO {
+    /**
+     * 接收短信的手机号码
+     */
+    private String mobile;
+
+    /**
+     * 模板参数，格式如:12345
+     */
+    private String code;
+}

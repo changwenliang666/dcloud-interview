@@ -24,12 +24,14 @@ public enum BizCodeEnum {
     ACCOUNT_NO_AUTH(110007, "无权限访问"),
 
     /**
-     *验证码
+     *短信验证码
      */
     CODE_TO_ERROR(240001,"接收号码不合规"),
     CODE_LIMITED(240002,"验证码发送过快"),
     CODE_ERROR(240003,"验证码错误"),
     CODE_CAPTCHA_ERROR(240101,"图形验证码错误"),
+    CODE_CAPTCHA_EXPIRED(240102,"图形验证码过期"),
+    CODE_SEND_FAIL(240004,"短信验证码发送失败"),
 
     /**
      * 权益
@@ -40,7 +42,7 @@ public enum BizCodeEnum {
 
 
     /**
-     * 验证码相关错误码
+     * 图形验证码
      */
     CAPTCHA_EXPIRED(110008, "验证码已过期"),
     CAPTCHA_ERROR(110009, "验证码错误"),
