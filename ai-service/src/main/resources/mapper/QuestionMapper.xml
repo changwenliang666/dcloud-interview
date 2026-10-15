@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.xdclass.mapper.QuestionMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="net.xdclass.model.QuestionDO">
+        <id column="id" property="id" />
+        <result column="interview_id" property="interviewId" />
+        <result column="account_id" property="accountId" />
+        <result column="interview_round_id" property="interviewRoundId" />
+        <result column="status" property="status" />
+        <result column="user_answer" property="userAnswer" />
+        <result column="evaluation" property="evaluation" />
+        <result column="content" property="content" />
+        <result column="type" property="type" />
+        <result column="difficulty" property="difficulty" />
+        <result column="category" property="category" />
+        <result column="standard_answer" property="standardAnswer" />
+        <result column="key_points" property="keyPoints" />
+        <result column="max_score" property="maxScore" />
+        <result column="time_limit" property="timeLimit" />
+        <result column="user_score" property="userScore" />
+        <result column="gmt_create" property="gmtCreate" />
+        <result column="gmt_modified" property="gmtModified" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, interview_id, account_id, interview_round_id, status, user_answer, evaluation, content, type, difficulty, category, standard_answer, key_points, max_score, time_limit, user_score, gmt_create, gmt_modified
+    </sql>
+
+</mapper>

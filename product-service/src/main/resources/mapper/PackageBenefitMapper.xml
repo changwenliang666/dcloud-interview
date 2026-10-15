@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.xdclass.mapper.PackageBenefitMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="net.xdclass.model.PackageBenefitDO">
+        <id column="id" property="id" />
+        <result column="product_package_id" property="productPackageId" />
+        <result column="benefit_code" property="benefitCode" />
+        <result column="count" property="count" />
+        <result column="gmt_create" property="gmtCreate" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, product_package_id, benefit_code, count, gmt_create
+    </sql>
+
+</mapper>

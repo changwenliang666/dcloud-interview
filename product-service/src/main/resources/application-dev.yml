@@ -1,0 +1,68 @@
+# 开发环境
+spring:
+  # nacos配置，需要改为服务器ip
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 140.143.144.152:8848
+        username: nacos
+        password: 123456
+
+  rabbitmq:
+    host: 140.143.144.152
+    port: 5672
+    virtual-host: /
+    username: root
+    password: 123456
+    listener:
+      simple:
+        acknowledge-mode: manual
+
+  # db
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://140.143.144.152:3306/product_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+    hikari:
+      max-lifetime: 300000         # 5分钟，单位毫秒
+      connection-timeout: 30000
+      validation-timeout: 5000
+      idle-timeout: 60000
+      minimum-idle: 5
+      maximum-pool-size: 20
+      pool-name: HikariCP
+  hikari:
+    max-lifetime: 60000
+    connection-test-query: SELECT 1  # MySQL 验证语句
+  #  redis配置
+  data:
+    redis:
+      host: 140.143.144.152
+      port: 6379
+      password: 123456
+#  锁配置 防止不同环境争抢一把锁
+lock:
+  prefix-key: dev
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: net.xdclass.model
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+knife4j:
+  enable: false
+
+springdoc:
+  group-configs:
+    - group: 'default'
+      paths-to-match:
+        - /**
+      packages-to-scan:
+        - net.xdclass.controller
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
