@@ -15,7 +15,7 @@ import lombok.Setter;
  * AI对话记录（会话+消息合并表）
  * </p>
  *
- * @author 小滴课堂-二当家小D,
+ * @author WenliangChang
  * @since 2026-10-15
  */
 @Getter

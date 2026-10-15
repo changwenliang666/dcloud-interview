@@ -8,7 +8,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * AI对话记录（会话+消息合并表） Mapper 接口
  * </p>
  *
- * @author 小滴课堂-二当家小D,
+ * @author WenliangChang
  * @since 2026-10-15
  */
 public interface AiChatRecordMapper extends BaseMapper<AiChatRecordDO> {

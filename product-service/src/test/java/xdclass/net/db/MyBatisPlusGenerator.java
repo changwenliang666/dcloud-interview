@@ -8,7 +8,11 @@ import com.baomidou.mybatisplus.generator.config.rules.DateType;
 import com.baomidou.mybatisplus.generator.config.rules.DbColumnType;
 import org.apache.ibatis.type.JdbcType;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 小滴课堂,愿景：让技术不再难学
@@ -43,7 +47,7 @@ public class MyBatisPlusGenerator {
         // 使用 FastAutoGenerator 快速配置代码生成器
         FastAutoGenerator.create("jdbc:mysql://"+serverInfo+"/"+dbName+"?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&tinyInt1isBit=true", userName, password)
                 .globalConfig(builder -> {
-                    builder.author("小滴课堂-二当家小D,")        // 设置作者
+                    builder.author(resolveGitAuthor())        // 作者取本机 git user.name
                             .commentDate("yyyy-MM-dd")
                             .enableSpringdoc()
                             .disableOpenDir() //禁止打开输出目录
@@ -90,6 +94,26 @@ public class MyBatisPlusGenerator {
                     builder.disable(TemplateType.CONTROLLER,TemplateType.SERVICE,TemplateType.SERVICE_IMPL);
                 })
                 .execute(); // 执行生成
+    }
+
+    /**
+     * 读取本机 git user.name，作为生成代码的 @author。
+     */
+    private static String resolveGitAuthor() {
+        try {
+            Process process = new ProcessBuilder("git", "config", "--get", "user.name").start();
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+                String name = reader.readLine();
+                if (process.waitFor(3, TimeUnit.SECONDS) && process.exitValue() == 0
+                        && name != null && !name.isBlank()) {
+                    return name.trim();
+                }
+            }
+        } catch (Exception ignored) {
+            // git 不可用时回退到系统用户名
+        }
+        return System.getProperty("user.name", "unknown");
     }
 
 }

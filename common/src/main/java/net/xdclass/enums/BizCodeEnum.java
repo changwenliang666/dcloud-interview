@@ -66,6 +66,8 @@ public enum BizCodeEnum {
 
     PRODUCT_NOT_EXIST(220001, "商品不存在"),
 
+    BANNER_NOT_EXIST(220002, "Banner不存在"),
+
     REPEAT_SUBMIT_IDEMPOTENT(20001,"重复提交"),
 
     MQ_CONSUME_EXCEPTION(41231,"消息消费失败" );

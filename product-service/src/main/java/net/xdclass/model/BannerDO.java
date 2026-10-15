@@ -15,7 +15,7 @@ import lombok.Setter;
  * 
  * </p>
  *
- * @author 小滴课堂-二当家小D,
+ * @author WenliangChang
  * @since 2026-10-15
  */
 @Getter
@@ -26,7 +26,7 @@ public class BannerDO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-      @TableId(value = "id", type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
     @Schema(description = "格式页面-位置-模块")

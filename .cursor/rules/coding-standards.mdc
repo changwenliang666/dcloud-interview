@@ -1,9 +1,5 @@
 ---
-应用: 始终
----
-
----
-trigger: always_on
+description: Java 多模块项目开发编码规范
 alwaysApply: true
 ---
 # Java 多模块项目开发编码规范

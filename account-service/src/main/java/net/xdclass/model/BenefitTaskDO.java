@@ -15,7 +15,7 @@ import lombok.Setter;
  * 权益任务表(本地事务消息表)
  * </p>
  *
- * @author 小滴课堂-二当家小D,
+ * @author WenliangChang
  * @since 2026-10-15
  */
 @Getter

@@ -15,7 +15,7 @@ import lombok.Setter;
  * 用户表，支持微信登录
  * </p>
  *
- * @author 小滴课堂-二当家小D,
+ * @author WenliangChang
  * @since 2026-10-15
  */
 @Getter
