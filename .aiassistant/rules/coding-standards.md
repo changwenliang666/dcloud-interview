@@ -1,0 +1,1178 @@
+---
+应用: 始终
+---
+
+---
+trigger: always_on
+alwaysApply: true
+---
+# Java 多模块项目开发编码规范
+
+> 适用于 Spring Boot + Maven 多模块聚合项目的通用开发规范
+
+---
+
+## 📌 一、适用范围
+
+### 技术栈要求
+- **框架**: Spring Boot 2.x / 3.x
+- **持久层**: MyBatis / MyBatis-Plus
+- **构建工具**: Maven
+- **架构**: 多模块聚合项目（公共模块 + 业务模块）
+
+### 模块结构示例
+```
+project-root/
+├── common-module/        # 公共模块（异常、工具类、枚举）
+├── user-module/          # 用户模块
+├── order-module/         # 订单模块
+└── pom.xml              # 父POM
+```
+
+---
+
+## 🎯 二、架构设计原则（SOLID）
+
+### 1. 单一职责原则 (SRP)
+**原则**: 一个类只负责一项职责
+
+```java
+// ❌ 错误：一个Service承担过多职责
+@Service
+public class BusinessServiceImpl {
+    public void processBusinessLogic(BusinessReq req) {
+        // 查询数据库 + 发送MQ + 计算指标 + 更新数据库
+    }
+}
+
+// ✅ 正确：拆分为职责清晰的Service
+@Service
+public class BusinessQueryService {
+    public BusinessDO query(Long id) { ... }
+}
+
+@Service
+public class BusinessProcessService {
+    public void process(BusinessDO business) { ... }
+}
+```
+
+### 2. 开闭原则 (OCP) - 使用策略模式
+**原则**: 对扩展开放，对修改关闭
+
+```java
+// ❌ 错误：使用if-else判断类型
+public void pay(String payType) {
+    if ("ALIPAY".equals(payType)) {
+        // 支付宝逻辑
+    } else if ("WECHAT".equals(payType)) {
+        // 微信支付逻辑
+    }
+}
+
+// ✅ 正确：使用策略模式
+public interface PayStrategy {
+    boolean pay(OrderDO order);
+    boolean support(PayTypeEnum payType);
+}
+
+@Component
+public class PayStrategyFactory {
+    @Resource
+    private List<PayStrategy> strategies;
+    
+    public PayStrategy getStrategy(PayTypeEnum payType) {
+        return strategies.stream()
+            .filter(s -> s.support(payType))
+            .findFirst()
+            .orElseThrow(() -> new BizException(BizCodeEnum.PAY_TYPE_UNSUPPORTED));
+    }
+}
+```
+
+---
+
+## 🏷️ 三、命名规范
+
+### 1. 包名规范
+```
+com.company.project.模块名.分层
+├── com.company.project.common.exception      # 公共异常
+├── com.company.project.common.enums          # 公共枚举
+├── com.company.project.common.util           # 公共工具类
+├── com.company.project.user.controller       # 用户模块控制器
+├── com.company.project.user.service          # 用户模块服务
+├── com.company.project.user.mapper           # 用户模块Mapper
+├── com.company.project.user.model            # 用户模块实体
+├── com.company.project.user.dto              # 用户模块DTO
+└── com.company.project.user.feign            # 用户模块Feign接口
+```
+
+### 2. 类名规范
+
+| 类型 | 命名规范 | 示例 | 说明 |
+|-----|---------|------|------|
+| **DO** | XxxDO | UserDO, OrderDO | 数据库实体对象 |
+| **DTO** | XxxDTO | UserDTO, OrderDTO | 数据传输对象（用于返回） |
+| **Req** | XxxReq | UserSaveReq, OrderPageReq | 请求参数对象 |
+| **Service接口** | XxxService | UserService | 服务接口 |
+| **Service实现** | XxxServiceImpl | UserServiceImpl | 服务实现类 |
+| **Controller** | XxxController | UserController | 控制器 |
+| **Mapper** | XxxMapper | UserMapper | 数据访问接口 |
+| **Enum** | XxxEnum | UserStatusEnum | 枚举类 |
+| **Constants** | XxxConstants | UserConstants | 常量类 |
+| **Utils** | XxxUtil | JsonUtil, DateUtil | 工具类 |
+
+### 3. 对象构建规范
+
+#### ✅ 推荐：使用 @Builder 构建对象
+
+```java
+// DO实体类定义
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@TableName("t_comment")
+public class CommentDO {
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
+    private Long id;
+    private Long questionId;
+    private String content;
+    
+    @TableField(value = "gmt_create", fill = FieldFill.INSERT)
+    private Date gmtCreate;
+    
+    @TableField(value = "gmt_modified", fill = FieldFill.INSERT_UPDATE)
+    private Date gmtModified;
+}
+
+// 使用Builder模式创建对象
+CommentDO commentDO = CommentDO.builder()
+        .questionId(req.getQuestionId())
+        .content(cleanedContent)
+        .build();
+```
+
+#### ✅ DTO和Req规范
+
+```java
+// DTO（同DO，使用Builder）
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class CommentDTO {
+    private Long id;
+    private String content;
+}
+
+// Req（只使用@Data）
+@Data
+public class CommentSaveReq {
+    @NotNull(message = "问题ID不能为空")
+    private Long questionId;
+    
+    @NotBlank(message = "评论内容不能为空")
+    private String content;
+}
+```
+
+#### ❌ 错误：使用set方法
+
+```java
+CommentDO commentDO = new CommentDO();
+commentDO.setQuestionId(req.getQuestionId());
+commentDO.setContent(cleanedContent);  // 代码冗长
+
+#### 📝 Lombok注解组合规范
+
+```java
+// DO实体类：完整注解
+@Data                    // 生成getter/setter/toString/equals/hashCode
+@Builder                 // 生成Builder模式代码
+@NoArgsConstructor       // 生成无参构造（MyBatis-Plus需要）
+@AllArgsConstructor      // 生成全参构造（Builder需要）
+@TableName("t_xxx")      // MyBatis-Plus表名映射
+public class XxxDO { ... }
+
+// DTO/VO：同DO
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class XxxDTO { ... }
+
+// Req：只需@Data（参数接收不需要Builder）
+@Data
+public class XxxReq { ... }
+```
+
+### 4. 方法名规范
+
+| 方法类型 | 命名规范 | 示例 |
+|---------|---------|------|
+| **查询单个** | findById / getById | findById(Long id) |
+| **查询列表** | list / findList | listByStatus(String status) |
+| **分页查询** | page | page(PageReq req) |
+| **保存** | save | save(UserSaveReq req) |
+| **更新** | update | update(UserUpdateReq req) |
+| **删除** | delete | deleteById(Long id) |
+| **统计** | count | countByStatus(String status) |
+| **校验** | validate / check | validateUser(UserDO user) |
+| **转换** | convert / to | convertToDTO(UserDO userDO) |
+| **构建** | build | buildQueryWrapper(UserPageReq req) |
+
+### 5. 变量命名规范
+
+```java
+// ✅ 正确命名
+private Long userId;              // 驼峰命名
+private String userName;          
+private List<OrderDO> orderList;  // 集合加List后缀
+private Map<Long, UserDO> userMap; // Map加Map后缀
+private boolean isDeleted;        // boolean类型用is/has开头
+private int maxRetryCount;        // 常量用max/min等前缀
+
+// ❌ 错误命名
+private Long user_id;             // 不使用下划线
+private String yhm;               // 不使用拼音缩写
+private List<OrderDO> orders;     // 集合应明确类型
+private boolean deleted;          // boolean应有is前缀
+```
+
+### 6. 常量命名规范
+
+```java
+public class UserConstants {
+    /**
+     * 用户状态：正常
+     */
+    public static final String STATUS_NORMAL = "NORMAL";
+    
+    /**
+     * 用户状态：禁用
+     */
+    public static final String STATUS_DISABLED = "DISABLED";
+    
+    /**
+     * 最大登录失败次数
+     */
+    public static final int MAX_LOGIN_FAIL_COUNT = 5;
+    
+    /**
+     * Redis Key前缀
+     */
+    public static final String REDIS_KEY_PREFIX = "user:";
+}
+```
+
+**时间字段规范**：
+- 字段命名：`gmtCreate`（创建时间）、`gmtModified`（更新时间）
+- 字段类型：`java.util.Date`
+- 数据库字段：`gmt_create`、`gmt_modified`
+- 填充策略：使用 `@TableField(fill = FieldFill.INSERT/INSERT_UPDATE)`
+- **重要**：时间字段由数据库自动填充，代码中无需手动设置
+
+```java
+// ✅ 正确：不设置时间字段
+OrderDO orderDO = OrderDO.builder()
+        .orderNo(orderNo)
+        .userId(userId)
+        .amount(amount)
+        .build();
+// gmtCreate和gmtModified由数据库自动填充
+
+// ❌ 错误：手动设置时间字段
+orderDO.setGmtCreate(new Date());  // 不需要
+orderDO.setGmtModified(new Date()); // 不需要
+```
+
+---
+
+## 🚨 四、异常处理规范
+
+### 1. 异常体系设计
+
+```java
+// 自定义业务异常
+public class BizException extends RuntimeException {
+    private int code;
+    private String msg;
+    
+    public BizException(BizCodeEnum bizCodeEnum) {
+        this.code = bizCodeEnum.getCode();
+        this.msg = bizCodeEnum.getMessage();
+    }
+    
+    public BizException(BizCodeEnum bizCodeEnum, Throwable cause) {
+        super(cause);
+        this.code = bizCodeEnum.getCode();
+        this.msg = bizCodeEnum.getMessage();
+    }
+}
+```
+
+### 2. 错误码定义
+
+```java
+public enum BizCodeEnum {
+    // ============ 通用错误码 (100xxx) ============
+    PARAM_INVALID(100001, "参数校验失败"),
+    PARAM_MISSING(100002, "缺少必填参数"),
+    
+    // ============ 用户模块 (200xxx) ============
+    USER_NOT_EXIST(200001, "用户不存在"),
+    USER_DISABLED(200002, "用户已被禁用"),
+    USERNAME_DUPLICATE(200003, "用户名已存在"),
+    PASSWORD_WRONG(200004, "密码错误"),
+    
+    // ============ 订单模块 (230xxx) ============
+    ORDER_NOT_EXIST(230001, "订单不存在"),
+    ORDER_STATUS_INVALID(230002, "订单状态非法"),
+    
+    // ============ 系统错误 (500xxx) ============
+    SYSTEM_ERROR(500000, "系统异常"),
+    DATABASE_ERROR(500002, "数据库异常");
+    
+    @Getter
+    private String message;
+    @Getter
+    private int code;
+    
+    BizCodeEnum(int code, String message) {
+        this.code = code;
+        this.message = message;
+    }
+}
+```
+
+### 3. 异常抛出规范
+
+```java
+// ✅ 正确：资源不存在抛异常
+public UserDTO findById(Long id) {
+    UserDO userDO = userMapper.selectById(id);
+    if (userDO == null) {
+        throw new BizException(BizCodeEnum.USER_NOT_EXIST);
+    }
+    return convert(userDO);
+}
+
+// ✅ 正确：业务规则校验失败抛异常
+public Long register(UserRegisterReq req) {
+    UserDO existUser = userMapper.selectOne(
+        new LambdaQueryWrapper<UserDO>()
+            .eq(UserDO::getUsername, req.getUsername())
+    );
+    if (existUser != null) {
+        throw new BizException(BizCodeEnum.USERNAME_DUPLICATE);
+    }
+    // 正常注册逻辑
+}
+
+// ✅ 正确：包装三方异常
+public String uploadFile(MultipartFile file) {
+    try {
+        // 文件上传逻辑
+        return fileName;
+    } catch (IOException e) {
+        log.error("文件上传失败, fileName:{}", fileName, e);
+        throw new BizException(BizCodeEnum.FILE_UPLOAD_FAILED, e);
+    }
+}
+
+// ❌ 错误：不要返回null
+public UserDTO findById(Long id) {
+    UserDO userDO = userMapper.selectById(id);
+    if (userDO == null) {
+        return null;  // ❌ 调用方需判空，容易NPE
+    }
+    return convert(userDO);
+}
+```
+
+### 4. 全局异常处理
+
+```java
+@ControllerAdvice
+@Slf4j
+public class GlobalExceptionHandler {
+    
+    /**
+     * 业务异常
+     */
+    @ExceptionHandler(BizException.class)
+    @ResponseBody
+    public JsonData handleBizException(BizException e) {
+        log.warn("[业务异常] code:{}, msg:{}", e.getCode(), e.getMsg());
+        return JsonData.buildCodeAndMsg(e.getCode(), e.getMsg());
+    }
+    
+    /**
+     * 参数校验异常
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseBody
+    public JsonData handleValidException(MethodArgumentNotValidException e) {
+        String errorMsg = e.getBindingResult().getFieldErrors().stream()
+            .map(error -> error.getField() + ": " + error.getDefaultMessage())
+            .collect(Collectors.joining(", "));
+        log.warn("[参数校验失败] {}", errorMsg);
+        return JsonData.buildCodeAndMsg(BizCodeEnum.PARAM_INVALID.getCode(), errorMsg);
+    }
+    
+    /**
+     * 系统异常
+     */
+    @ExceptionHandler(Exception.class)
+    @ResponseBody
+    public JsonData handleException(Exception e) {
+        log.error("[系统异常] ", e);
+        return JsonData.buildCodeAndMsg(BizCodeEnum.SYSTEM_ERROR.getCode(), "系统异常");
+    }
+}
+```
+
+---
+
+## 📝 五、日志规范
+
+### 1. 日志级别使用
+
+| 级别 | 使用场景 | 生产环境 | 示例 |
+|------|---------|---------|------|
+| **ERROR** | 系统异常、需要人工介入 | ✅ 启用 | 数据库连接失败、第三方服务超时 |
+| **WARN** | 业务异常、预期内的错误 | ✅ 启用 | 用户名已存在、余额不足 |
+| **INFO** | 关键业务流程节点 | ✅ 启用 | 用户登录、订单创建 |
+| **DEBUG** | 调试信息、详细参数 | ❌ 关闭 | 方法入参、SQL参数 |
+
+### 2. 日志示例
+
+```java
+// Controller层
+@PostMapping("/register")
+public JsonData register(@RequestBody UserRegisterReq req) {
+    log.info("用户注册请求, username:{}", req.getUsername());
+    Long userId = userService.register(req);
+    log.info("用户注册成功, userId:{}", userId);
+    return JsonData.buildSuccess(userId);
+}
+
+// Service层
+@Override
+public OrderDTO save(OrderSaveReq req) {
+    log.debug("保存订单, req:{}", JsonUtil.obj2Json(req));
+    orderMapper.insert(orderDO);
+    log.info("订单创建成功, orderId:{}", orderDO.getId());
+    return convert(orderDO);
+}
+```
+
+### 3. 异常日志
+
+```java
+public String uploadFile(MultipartFile file) {
+    try {
+        // 文件上传逻辑
+        log.info("文件上传成功, fileName:{}", fileName);
+        return fileName;
+    } catch (Exception e) {
+        log.error("文件上传失败, fileName:{}", fileName, e);
+        throw new BizException(BizCodeEnum.FILE_UPLOAD_FAILED, e);
+    }
+}
+```
+
+### 4. 敏感信息脱敏
+
+```java
+// 手机号脱敏: 138****5678
+public static String maskPhone(String phone) {
+    return phone.substring(0, 3) + "****" + phone.substring(7);
+}
+```
+
+---
+
+## 📄 六、分页查询规范
+
+### 1. 分页查询标准流程
+
+```java
+@Override
+public JsonData page(UserBenefitPageReq req) {
+    // 1. 构建查询条件
+    LambdaQueryWrapper<UserBenefitDO> queryWrapper = new LambdaQueryWrapper<UserBenefitDO>()
+            .eq(UserBenefitDO::getUserId, req.getUserId())
+            .orderByDesc(UserBenefitDO::getCreatedAt);
+    
+    // 2. 分页查询
+    Page<UserBenefitDO> page = new Page<>(req.getPage(), req.getSize());
+    Page<UserBenefitDO> resultPage = mapper.selectPage(page, queryWrapper);
+    
+    // 3. DO转DTO并构建结果
+    List<UserBenefitDTO> dtoList = resultPage.getRecords().stream()
+            .map(this::convertToDTO)
+            .collect(Collectors.toList());
+    
+    Map<String, Object> result = CommonUtil.convertToPageMap(resultPage, dtoList);
+    return JsonData.buildSuccess(result);
+}
+```
+
+### 2. 分页请求参数规范
+
+```java
+@Data
+public class UserBenefitPageReq {
+    
+    /**
+     * 页码（从1开始）
+     */
+    @Min(value = 1, message = "页码最小为1")
+    private Integer page = 1;
+    
+    /**
+     * 每页大小
+     */
+    @Min(value = 1, message = "每页大小最小为1")
+    @Max(value = 100, message = "每页大小最大为100")
+    private Integer size = 10;
+    
+    /**
+     * 权益编码（可选）
+     */
+    private String benefitCode;
+    
+    /**
+     * 是否只显示有效权益（可选）
+     */
+    private Boolean onlyActive;
+}
+```
+
+### 3. 分页结果构建工具方法
+
+```java
+public class CommonUtil {
+    // 方式1：自动转换DO为DTO
+    public static <DO, DTO> Map<String, Object> convertToPageMap(IPage<DO> pageResult, Class<DTO> dtoClass) {
+        List<DTO> dtoList = SpringBeanUtil.copyProperties(pageResult.getRecords(), dtoClass);
+        Map<String, Object> pageMap = new HashMap<>(3);
+        pageMap.put("totalRecord", pageResult.getTotal());
+        pageMap.put("totalPage", pageResult.getPages());
+        pageMap.put("currentData", dtoList);
+        return pageMap;
+    }
+    
+    // 方式2：自定义DTO列表（推荐）
+    public static <T> Map<String, Object> convertToPageMap(IPage<?> pageResult, List<T> records) {
+        Map<String, Object> result = new HashMap<>();
+        result.put("records", records);
+        result.put("totalRecord", pageResult.getTotal());
+        result.put("totalPage", pageResult.getPages());
+        result.put("currentPage", pageResult.getCurrent());
+        result.put("pageSize", pageResult.getSize());
+        return result;
+    }
+}
+```
+
+**使用示例**：
+
+```java
+// 方式1：简单转换
+Map<String, Object> result = CommonUtil.convertToPageMap(page, UserDTO.class);
+
+// 方式2：复杂转换（补充额外信息）
+List<CommentDTO> dtoList = page.getRecords().stream()
+        .map(commentDO -> {
+            CommentDTO dto = SpringBeanUtil.copyProperties(commentDO, CommentDTO.class);
+            dto.setReplyList(commentService.findReplyList(commentDO.getId()));
+            return dto;
+        })
+        .collect(Collectors.toList());
+Map<String, Object> result = CommonUtil.convertToPageMap(page, dtoList);
+```
+
+### 4. 分页查询最佳实践
+
+```java
+// ✅ 推荐：使用LambdaQueryWrapper + 动态条件
+LambdaQueryWrapper<UserDO> queryWrapper = new LambdaQueryWrapper<UserDO>()
+        .eq(UserDO::getStatus, "ACTIVE")
+        .like(StringUtils.isNotBlank(req.getKeyword()), UserDO::getUsername, req.getKeyword())
+        .orderByDesc(UserDO::getCreatedAt);
+
+// ❌ 错误：使用字符串拼接SQL（SQL注入风险）
+String sql = "SELECT * FROM t_user WHERE username LIKE '%" + keyword + "%'";
+
+// ❌ 错误：返回DO对象（暴露数据库字段）
+return JsonData.buildSuccess(resultPage.getRecords());
+```
+
+### 5. 分页响应格式
+
+```json
+{
+    "code": 0,
+    "data": {
+        "records": [{"id": 1, "username": "test"}],
+        "totalRecord": 100,
+        "totalPage": 10
+    }
+}
+```
+
+---
+
+## ✅ 代码检查清单
+
+### 提交前自检
+- [ ] 类名、方法名、变量名符合命名规范
+- [ ] 无拼音命名、无意义不明的缩写
+- [ ] DO/DTO使用@Builder构建对象（避免冗长的set方法）
+- [ ] DO/DTO实体类包含@NoArgsConstructor和@AllArgsConstructor
+- [ ] Req对象只使用@Data（不需要Builder）
+- [ ] Service方法不返回null（抛异常或Optional）
+- [ ] 异常都有对应的BizCodeEnum
+- [ ] 关键业务操作记录INFO日志
+- [ ] 敏感信息已脱敏（密码、Token等）
+- [ ] 无System.out.println()
+- [ ] 无e.printStackTrace()
+- [ ] 无空catch块
+- [ ] 使用策略模式替代if-else类型判断
+- [ ] 分页查询使用LambdaQueryWrapper（避免SQL注入）
+- [ ] 分页size有上限校验（防止OOM）
+- [ ] 分页结果DO已转换为DTO（不暴露数据库字段）
+
+### Code Review重点
+- [ ] 单一职责原则（一个类只做一件事）
+- [ ] 开闭原则（扩展不修改）
+- [ ] 命名是否见名知意
+- [ ] 对象构建是否使用Builder模式（DO/DTO）
+- [ ] 异常处理是否完整
+- [ ] 日志级别是否合理
+- [ ] 是否有大对象toString()影响性能
+
+---
+
+---
+
+## 🔌 七、微服务调用规范
+
+### 1. Feign接口定义规范
+
+```java
+package com.company.project.account.feign;
+
+import com.company.project.common.util.JsonData;
+import com.company.project.account.dto.AccountDTO;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.*;
+
+/**
+ * 账户服务Feign客户端
+ */
+@FeignClient(name = "dcloud-account", path = "/api/account/v1")
+public interface AccountFeignService {
+    
+    /**
+     * 根据ID查询账户信息
+     */
+    @GetMapping("/detail")
+    JsonData<AccountDTO> getAccountById(@RequestParam("id") Long id);
+    
+    /**
+     * 根据用户名查询账户
+     */
+    @GetMapping("/findByUsername")
+    JsonData<AccountDTO> findByUsername(@RequestParam("username") String username);
+    
+    /**
+     * 批量查询账户信息
+     */
+    @PostMapping("/batchQuery")
+    JsonData<List<AccountDTO>> batchQuery(@RequestBody List<Long> accountIds);
+    
+    /**
+     * 更新账户状态
+     */
+    @PostMapping("/updateStatus")
+    JsonData<Boolean> updateStatus(@RequestParam("id") Long id, @RequestParam("status") String status);
+}
+```
+
+### 2. Feign命名规范
+
+| 类型 | 命名规范 | 示例 | 说明 |
+|-----|---------|------|------|
+| **Feign接口** | XxxFeignService | AccountFeignService, OrderFeignService | 服务间调用接口 |
+| **@FeignClient name** | dcloud-xxx | dcloud-account, dcloud-order | 服务名称（小写+短横线） |
+| **@FeignClient path** | /api/模块名/v1 | /api/account/v1 | 统一路径前缀 |
+
+### 3. Feign调用规范
+
+```java
+@Service
+@Slf4j
+public class OrderServiceImpl implements OrderService {
+    
+    @Resource
+    private AccountFeignService accountFeignService;
+    
+    @Override
+    public OrderDTO createOrder(OrderCreateReq req) {
+        // 1. 调用账户服务
+        JsonData<AccountDTO> accountResult = accountFeignService.getAccountById(req.getAccountId());
+        
+        // 2. 判断调用结果
+        if (accountResult.getCode() != 0) {
+            log.error("查询账户失败, accountId:{}, errorMsg:{}", req.getAccountId(), accountResult.getMsg());
+            throw new BizException(BizCodeEnum.ACCOUNT_NOT_EXIST);
+        }
+        
+        AccountDTO account = accountResult.getData();
+        if (account == null || !"ACTIVE".equals(account.getStatus())) {
+            throw new BizException(BizCodeEnum.ACCOUNT_DISABLED);
+        }
+        
+        // 3. 继续业务处理
+        log.info("账户验证通过, accountId:{}", account.getId());
+        // ...创建订单逻辑
+    }
+}
+```
+
+### 4. Feign异常处理
+
+```java
+@Override
+public OrderDTO createOrder(OrderCreateReq req) {
+    try {
+        JsonData<AccountDTO> result = accountFeignService.getAccountById(req.getAccountId());
+        
+        if (result.getCode() != 0) {
+            log.error("调用账户服务失败, accountId:{}, msg:{}", req.getAccountId(), result.getMsg());
+            throw new BizException(BizCodeEnum.REMOTE_SERVICE_ERROR);
+        }
+        
+        return result.getData();
+        
+    } catch (FeignException e) {
+        log.error("调用账户服务异常, accountId:{}", req.getAccountId(), e);
+        throw new BizException(BizCodeEnum.REMOTE_SERVICE_ERROR);
+    }
+}
+```
+
+### 5. Feign批量调用
+
+```java
+// ✅ 正确：批量查询，减少网络调用
+JsonData<List<AccountDTO>> result = accountFeignService.batchQuery(accountIds);
+Map<Long, AccountDTO> accountMap = result.getData().stream()
+        .collect(Collectors.toMap(AccountDTO::getId, account -> account));
+
+// ❌ 错误：在循环中调用Feign
+for (Long accountId : accountIds) {
+    JsonData<AccountDTO> result = accountFeignService.getAccountById(accountId);  // 性能问题
+}
+```
+
+### 6. Feign日志规范
+
+```java
+@Override
+public OrderDTO createOrder(OrderCreateReq req) {
+    log.info("调用账户服务开始, accountId:{}", req.getAccountId());
+    long startTime = System.currentTimeMillis();
+    
+    try {
+        JsonData<AccountDTO> result = accountFeignService.getAccountById(req.getAccountId());
+        long costTime = System.currentTimeMillis() - startTime;
+        log.info("调用账户服务成功, costTime:{}ms", costTime);
+        return result.getData();
+    } catch (Exception e) {
+        long costTime = System.currentTimeMillis() - startTime;
+        log.error("调用账户服务失败, costTime:{}ms", costTime, e);
+        throw new BizException(BizCodeEnum.REMOTE_SERVICE_ERROR);
+    }
+}
+```
+
+### 7. Feign接口设计原则
+
+| 原则 | 说明 | 示例 |
+|------|------|------|
+| **单一职责** | 一个Feign接口只调用一个微服务 | AccountFeignService只调用account服务 |
+| **路径统一** | 使用 `/api/{模块名}/v1` 格式 | `/api/account/v1` |
+| **返回类型** | 统一返回 `JsonData<T>` | `JsonData<AccountDTO>` |
+| **参数传递** | 简单参数用@RequestParam，复杂对象用@RequestBody | 见上方示例 |
+| **异常处理** | 必须包装Feign异常为业务异常 | 抛出BizException |
+| **日志记录** | 调用前后必须记录日志，包含耗时 | 见上方示例 |
+
+---
+
+## 📦 八、完整代码示例
+
+### 1. 模块包结构
+
+```
+com.company.project.order
+├── controller/
+│   ├── req/
+│   │   ├── OrderCreateReq.java
+│   │   ├── OrderPageReq.java
+│   │   └── OrderCancelReq.java
+│   └── OrderController.java
+├── service/
+│   ├── strategy/
+│   │   ├── PayStrategy.java            # 支付策略接口
+│   │   ├── AlipayStrategy.java         # 支付宝策略
+│   │   └── WechatPayStrategy.java      # 微信支付策略
+│   ├── impl/
+│   │   └── OrderServiceImpl.java
+│   └── OrderService.java
+├── mapper/
+│   └── OrderMapper.java
+├── model/
+│   └── OrderDO.java
+├── dto/
+│   └── OrderDTO.java
+├── enums/
+│   ├── OrderStatusEnum.java
+│   └── PayTypeEnum.java
+├── constant/
+│   └── OrderConstants.java
+└── feign/
+    └── AccountFeignService.java        # 账户服务Feign接口
+```
+
+### 2. 实体类 (DO)
+
+```java
+package com.company.project.order.model;
+
+import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Data
+@TableName("t_order")
+public class OrderDO {
+    
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
+    private Long id;
+    
+    @TableField("order_no")
+    private String orderNo;
+    
+    @TableField("user_id")
+    private Long userId;
+    
+    @TableField("amount")
+    private BigDecimal amount;
+    
+    @TableField("status")
+    private String status;
+    
+    @TableField("pay_type")
+    private String payType;
+    
+    /**
+     * 创建时间（数据库自动填充，无需代码操作）
+     */
+    @TableField(value = "gmt_create", fill = FieldFill.INSERT)
+    private Date gmtCreate;
+    
+    /**
+     * 更新时间（数据库自动填充，无需代码操作）
+     */
+    @TableField(value = "gmt_modified", fill = FieldFill.INSERT_UPDATE)
+    private Date gmtModified;
+    
+    @TableLogic
+    @TableField("deleted")
+    private Integer deleted;
+}
+```
+
+### 3. 枚举类
+
+```java
+package com.company.project.order.enums;
+
+import lombok.Getter;
+
+@Getter
+public enum OrderStatusEnum {
+    CREATED("CREATED", "已创建"),
+    PAID("PAID", "已支付"),
+    CANCELLED("CANCELLED", "已取消"),
+    COMPLETED("COMPLETED", "已完成");
+    
+    private final String code;
+    private final String desc;
+    
+    OrderStatusEnum(String code, String desc) {
+        this.code = code;
+        this.desc = desc;
+    }
+    
+    public static OrderStatusEnum of(String code) {
+        for (OrderStatusEnum status : values()) {
+            if (status.code.equals(code)) {
+                return status;
+            }
+        }
+        throw new BizException(BizCodeEnum.PARAM_INVALID);
+    }
+}
+```
+
+### 4. 常量类
+
+```java
+package com.company.project.order.constant;
+
+import java.math.BigDecimal;
+
+public class OrderConstants {
+    
+    public static final String ORDER_NO_PREFIX = "ORD";
+    
+    public static final int ORDER_TIMEOUT_MINUTES = 30;
+    
+    public static final BigDecimal MAX_AMOUNT = new BigDecimal("999999.99");
+    
+    public static final String REDIS_KEY_PREFIX = "order:";
+}
+```
+
+### 5. Service接口
+
+```java
+package com.company.project.order.service;
+
+import com.company.project.order.dto.OrderDTO;
+import com.company.project.order.controller.req.*;
+import java.util.Map;
+
+public interface OrderService {
+    
+    OrderDTO create(OrderCreateReq req);
+    
+    boolean pay(String orderNo, PayTypeEnum payType);
+    
+    boolean cancel(OrderCancelReq req);
+    
+    OrderDTO findById(Long id);
+    
+    Map<String, Object> page(OrderPageReq req);
+}
+```
+
+### 6. Service实现（完整示例）
+
+```java
+package com.company.project.order.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import lombok.extern.slf4j.Slf4j;
+
+@Service
+@Slf4j
+public class OrderServiceImpl implements OrderService {
+    
+    @Resource
+    private OrderMapper orderMapper;
+    
+    @Resource
+    private PayStrategyFactory payStrategyFactory;
+    
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public OrderDTO create(OrderCreateReq req) {
+        // 1. 参数校验
+        validateCreateReq(req);
+        
+        // 2. 生成订单编号
+        String orderNo = generateOrderNo();
+        
+        // 3. 构建订单实体
+        OrderDO orderDO = buildOrderDO(req, orderNo);
+        
+        // 4. 保存订单
+        int rows = orderMapper.insert(orderDO);
+        if (rows <= 0) {
+            log.error("订单创建失败, req:{}", req);
+            throw new BizException(BizCodeEnum.DATABASE_ERROR);
+        }
+        
+        log.info("订单创建成功, orderNo:{}", orderNo);
+        return convert(orderDO);
+    }
+    
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean pay(String orderNo, PayTypeEnum payType) {
+        // 1. 查询订单
+        OrderDO orderDO = findByOrderNo(orderNo);
+        
+        // 2. 校验订单状态
+        if (!OrderStatusEnum.CREATED.getCode().equals(orderDO.getStatus())) {
+            log.warn("订单状态不正确, orderNo:{}", orderNo);
+            throw new BizException(BizCodeEnum.ORDER_STATUS_ERROR);
+        }
+        
+        // 3. 调用支付策略
+        boolean payResult = payStrategyFactory.getStrategy(payType).pay(orderDO);
+        
+        if (!payResult) {
+            throw new BizException(BizCodeEnum.ORDER_PAY_FAILED);
+        }
+        
+        // 4. 更新订单状态
+        orderDO.setStatus(OrderStatusEnum.PAID.getCode());
+        orderMapper.updateById(orderDO);
+        
+        log.info("订单支付成功, orderNo:{}", orderNo);
+        return true;
+    }
+    
+    @Override
+    public OrderDTO findById(Long id) {
+        OrderDO orderDO = orderMapper.selectById(id);
+        if (orderDO == null) {
+            throw new BizException(BizCodeEnum.ORDER_NOT_EXIST);
+        }
+        return convert(orderDO);
+    }
+    
+    // 私有方法
+    private OrderDO findByOrderNo(String orderNo) {
+        OrderDO orderDO = orderMapper.selectOne(
+            new LambdaQueryWrapper<OrderDO>().eq(OrderDO::getOrderNo, orderNo)
+        );
+        if (orderDO == null) {
+            throw new BizException(BizCodeEnum.ORDER_NOT_EXIST);
+        }
+        return orderDO;
+    }
+    
+    private OrderDTO convert(OrderDO orderDO) {
+        return SpringBeanUtil.copyProperties(orderDO, OrderDTO.class);
+    }
+}
+```
+
+### 7. 策略模式实现
+
+```java
+// 策略接口
+public interface PayStrategy {
+    boolean pay(OrderDO order);
+    boolean support(PayTypeEnum payType);
+}
+
+// 支付宝策略
+@Component
+public class AlipayStrategy implements PayStrategy {
+    @Override
+    public boolean support(PayTypeEnum payType) {
+        return PayTypeEnum.ALIPAY == payType;
+    }
+    
+    @Override
+    public boolean pay(OrderDO order) {
+        log.info("支付宝支付, orderNo:{}", order.getOrderNo());
+        // 调用支付宝SDK
+        return true;
+    }
+}
+
+// 策略工厂
+@Component
+public class PayStrategyFactory {
+    @Resource
+    private List<PayStrategy> strategies;
+    
+    public PayStrategy getStrategy(PayTypeEnum payType) {
+        return strategies.stream()
+                .filter(s -> s.support(payType))
+                .findFirst()
+                .orElseThrow(() -> new BizException(BizCodeEnum.PAY_TYPE_UNSUPPORTED));
+    }
+}
+```
+
+### 8. Controller层（传统参数风格）
+
+```java
+package com.company.project.order.controller;
+
+import com.company.project.common.util.JsonData;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/order/v1")
+@Slf4j
+public class OrderController {
+    
+    @Resource
+    private OrderService orderService;
+    
+    // 创建订单（POST + RequestBody）
+    @PostMapping("/add")
+    public JsonData add(@RequestBody OrderCreateReq req) {
+        log.info("创建订单请求, userId:{}", req.getUserId());
+        OrderDTO orderDTO = orderService.create(req);
+        return JsonData.buildSuccess(orderDTO);
+    }
+    
+    // 查询订单详情（GET + 问号参数）
+    @GetMapping("/detail")
+    public JsonData detail(@RequestParam("id") Long id) {
+        log.info("查询订单详情, id:{}", id);
+        OrderDTO orderDTO = orderService.findById(id);
+        return JsonData.buildSuccess(orderDTO);
+    }
+    
+    // 删除订单（POST + 问号参数）
+    @PostMapping("/del")
+    public JsonData del(@RequestParam("id") Long id) {
+        log.info("删除订单请求, id:{}", id);
+        boolean result = orderService.deleteById(id);
+        return JsonData.buildSuccess(result);
+    }
+}
+```
+
+**Controller接口规范说明**：
+
+| 操作类型 | HTTP方法 | 参数方式 | URL示例 | 说明 |
+|---------|---------|---------|---------|------|
+| **新增** | POST | @RequestBody | /api/order/v1/add | 使用RequestBody接收JSON |
+| **修改** | POST | @RequestBody | /api/order/v1/update | 使用RequestBody接收JSON |
+| **删除** | POST | @RequestParam | /api/order/v1/del?id=123 | 使用问号参数 |
+| **查询单个** | GET | @RequestParam | /api/order/v1/detail?id=123 | 使用问号参数 |
+| **分页查询列表** | POST | @RequestBody | /api/order/v1/page | 使用RequestBody接收分页参数 |
+| **list查询列表** | GET | @RequestParam | /api/banner/v1/list | 使用问号参数 |
+
+**核心原则**：
+- ✅ 简单参数（id、状态等）：使用 `@RequestParam` + 问号传参
+- ✅ 复杂对象（新增、修改、分页）：使用 `@RequestBody` + JSON
+- ✅ URL风格：`/api/{模块名}/v1/{操作名}`（不使用RESTful路径参数）
+- ❌ 避免：`/api/order/{id}`、`@PathVariable` 等RESTful风格
+
+---
+
+## 📚 参考资料
+- 《Clean Code》- Robert C. Martin
+- 《Effective Java》第三版 - Joshua Bloch
+- 《阿里巴巴Java开发手册》
