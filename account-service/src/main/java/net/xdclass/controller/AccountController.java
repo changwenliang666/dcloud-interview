@@ -2,6 +2,7 @@ package net.xdclass.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import net.xdclass.dto.SendCheckCodeDTO;
 import net.xdclass.service.AccountService;
 import net.xdclass.util.CaptchaUtil;
@@ -33,7 +34,7 @@ public class AccountController {
      * 发送短信验证码
      */
     @PostMapping("/send-check-code")
-    public JsonData sendCheckCode(@RequestBody SendCheckCodeDTO req) {
+    public JsonData sendCheckCode(@Valid @RequestBody SendCheckCodeDTO req) {
         return accountService.sendCheckCode(req);
     }
 }
