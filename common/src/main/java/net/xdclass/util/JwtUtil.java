@@ -33,7 +33,7 @@ public class JwtUtil {
     // 签名算法
     private final static SecureDigestAlgorithm<SecretKey, SecretKey> ALGORITHM = Jwts.SIG.HS256;
     // token过期时间，30天
-    private static final long EXPIRED = 1000 * 60 * 60 * 24 * 30;
+    private static final long EXPIRED = 1000L * 60 * 60 * 24 * 30;
 
     /**
      * 生成JWT

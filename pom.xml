@@ -52,8 +52,6 @@
         <nacos-client.version>3.1.0</nacos-client.version>
         <knife4j.version>4.4.0</knife4j.version>
         <dotenv.version>3.2.0</dotenv.version>
-        <poi.version>5.2.5</poi.version>
-        <pdfbox.version>3.0.2</pdfbox.version>
     </properties>
 
 
@@ -193,6 +191,51 @@
                 <groupId>com.baomidou</groupId>
                 <artifactId>kaptcha-spring-boot-starter</artifactId>
                 <version>1.0.0</version>
+            </dependency>
+
+            <!-- 阿里云OSS -->
+            <dependency>
+                <groupId>com.aliyun.oss</groupId>
+                <artifactId>aliyun-sdk-oss</artifactId>
+                <version>3.17.4</version>
+            </dependency>
+            <!-- 文件上传处理 -->
+            <dependency>
+                <groupId>commons-fileupload</groupId>
+                <artifactId>commons-fileupload</artifactId>
+                <version>1.5</version>
+            </dependency>
+
+            <!-- Apache POI - 用于解析Word/Excel等Office文件 -->
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi</artifactId>
+                <version>5.2.5</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-ooxml</artifactId>
+                <version>5.2.5</version>
+            </dependency>
+            <!-- 处理老版本DOC文件 -->
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-scratchpad</artifactId>
+                <version>5.2.5</version>
+            </dependency>
+
+            <!-- PDF解析 -->
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>pdfbox</artifactId>
+                <version>3.0.2</version>
+            </dependency>
+
+            <!-- HTML解析 - Jsoup -->
+            <dependency>
+                <groupId>org.jsoup</groupId>
+                <artifactId>jsoup</artifactId>
+                <version>1.17.1</version>
             </dependency>
 
         </dependencies>

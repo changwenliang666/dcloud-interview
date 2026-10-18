@@ -27,7 +27,7 @@ public class HttpUtil {
             if (response.isOk()) {
                 return response.body();
             }
-            log.error("[HTTP GET 失败] url: {}, status: {}, body: {}", url, response.getStatus(), response.body());
+            logFailure("HTTP GET", url, response);
         } catch (Exception e) {
             log.error("[HTTP GET 异常] url: {}", url, e);
         }
@@ -49,7 +49,7 @@ public class HttpUtil {
             if (response.isOk()) {
                 return response.body();
             }
-            log.error("[HTTP POST 失败] url: {}, status: {}, body: {}", url, response.getStatus(), response.body());
+            logFailure("HTTP POST", url, response);
         } catch (Exception e) {
             log.error("[HTTP POST 异常] url: {}", url, e);
         }
@@ -70,10 +70,18 @@ public class HttpUtil {
             if (response.isOk()) {
                 return response.body();
             }
-            log.error("[HTTP POST FORM 失败] url: {}, status: {}, body: {}", url, response.getStatus(), response.body());
+            logFailure("HTTP POST FORM", url, response);
         } catch (Exception e) {
             log.error("[HTTP POST FORM 异常] url: {}", url, e);
         }
         return null;
+    }
+
+    /**
+     * 4xx/5xx 且响应体为空时，Hutool 会把 body 写成 "Error request, response status: xxx"。
+     * 阿里云网关的真实原因在 X-Ca-Error-Message，这里只记录响应头。
+     */
+    private static void logFailure(String action, String url, HttpResponse response) {
+        log.error("[{} 失败] url: {}, status: {}, gateway: {}", action, url, response.getStatus(), response.header("X-Ca-Error-Message"));
     }
 } 

@@ -1,4 +1,4 @@
-package net.xdclass.dto;
+package net.xdclass.controller.rq;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class SendCheckCodeDTO {
+public class SendCheckCodeRq {
     @NotBlank(message = "手机号不能为空")
     private String identifier;
     @NotBlank(message = "业务类型不能为空")

@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SendSmsDTO {
+public class SmsDTO {
     /**
      * 接收短信的手机号码
      */
