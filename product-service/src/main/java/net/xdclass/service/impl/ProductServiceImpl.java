@@ -35,14 +35,7 @@ public class ProductServiceImpl implements ProductService {
     public List<BenefitVO> getBenefit() {
         LambdaQueryWrapper<BenefitDO> queryWrapper = new LambdaQueryWrapper<BenefitDO>()
                 .eq(BenefitDO::getStatus, StatusEnum.ON.name());
-        return benefitMapper.selectList(queryWrapper).stream().map(this::toBenefitVO).toList();
-    }
-
-    private BenefitVO toBenefitVO(BenefitDO benefit) {
-        BenefitVO vo = SpringBeanUtil.copyProperties(benefit, BenefitVO.class);
-        vo.setHot(benefit.getIsHot());
-        vo.setRecommended(benefit.getIsRecommended());
-        return vo;
+        return SpringBeanUtil.copyProperties(benefitMapper.selectList(queryWrapper), BenefitVO.class);
     }
 
     @Override
@@ -53,7 +46,6 @@ public class ProductServiceImpl implements ProductService {
 
         return productList.stream().map(productPackage -> {
             ProductPackageVO vo = SpringBeanUtil.copyProperties(productPackage, ProductPackageVO.class);
-            vo.setRecommended(productPackage.getIsRecommended());
             vo.setBenefitList(listPackageBenefit(productPackage.getId()));
             return vo;
         }).toList();
@@ -84,8 +76,6 @@ public class ProductServiceImpl implements ProductService {
             return null;
         }
         PackageBenefitVO vo = SpringBeanUtil.copyProperties(benefit, PackageBenefitVO.class);
-        vo.setHot(benefit.getIsHot());
-        vo.setRecommended(benefit.getIsRecommended());
         vo.setCount(relation.getCount());
         return vo;
     }
