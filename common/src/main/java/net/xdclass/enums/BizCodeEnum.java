@@ -39,7 +39,14 @@ public enum BizCodeEnum {
     BENEFIT_NOT_EXIST(110016, "权益不存在或已下架"),
     BENEFIT_NOT_ENOUGH(110017, "权益不足"),
 
-
+    /**
+     * 微信登录二维码状态
+     *
+     */
+    WECHAT_CODE_EXPIRED(300000,"登录二维码已经过期"),
+    WECHAT_CODE_UPDATE_FAIL(300001,"更新登录二维码状态失败"),
+    WECHAT_ACCOUNT_GET_FAIL(300002,"获取微信用户信息失败"),
+    WECHAT_CODE_LOGIN_RESULT_FAIL(300004,"用户扫码状态过期"),
 
     /**
      * 图形验证码

@@ -7,9 +7,9 @@ import net.xdclass.client.SmsClient;
 import net.xdclass.config.RedisKeyManager;
 import net.xdclass.controller.rq.AccountLoginReq;
 import net.xdclass.controller.rq.SendCheckCodeRq;
-import net.xdclass.dto.AccountDTO;
-import net.xdclass.dto.AccountLoginResultDTO;
-import net.xdclass.dto.SmsDTO;
+import net.xdclass.vo.AccountDTO;
+import net.xdclass.vo.AccountLoginResultVO;
+import net.xdclass.vo.SmsDTO;
 import net.xdclass.enums.AccountRoleEnum;
 import net.xdclass.enums.BizCodeEnum;
 import net.xdclass.enums.StatusEnum;
@@ -112,7 +112,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public AccountLoginResultDTO login(AccountLoginReq req) {
+    public AccountLoginResultVO login(AccountLoginReq req) {
         // 校验短信验证码是否存在
         boolean verifyCode = verifyIdentifierCode(req.getIdentifier(), req.getCheckCode(), req.getType());
         if (!verifyCode) {
@@ -143,7 +143,7 @@ public class AccountServiceImpl implements AccountService {
         //生成token
         String loginJWT = JwtUtil.geneTenantAccountLoginJWT(accountDTO);
 
-        return AccountLoginResultDTO.builder().success(true).token(loginJWT).accountDTO(accountDTO).build();
+        return AccountLoginResultVO.builder().success(true).token(loginJWT).accountDTO(accountDTO).build();
     }
 
     @Override

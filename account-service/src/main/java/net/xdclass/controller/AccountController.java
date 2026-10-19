@@ -6,7 +6,7 @@ import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import net.xdclass.controller.rq.AccountLoginReq;
 import net.xdclass.controller.rq.SendCheckCodeRq;
-import net.xdclass.dto.AccountLoginResultDTO;
+import net.xdclass.vo.AccountLoginResultVO;
 import net.xdclass.service.AccountService;
 import net.xdclass.util.CaptchaUtil;
 import net.xdclass.util.JsonData;
@@ -48,7 +48,7 @@ public class AccountController {
 
     @PostMapping("/login")
     public JsonData login(@Valid @RequestBody AccountLoginReq req) {
-        AccountLoginResultDTO loginResult = accountService.login(req);
+        AccountLoginResultVO loginResult = accountService.login(req);
         return JsonData.buildSuccess(loginResult);
     }
 

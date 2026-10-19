@@ -2,7 +2,7 @@ package net.xdclass.controller;
 
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import net.xdclass.dto.BannerDTO;
+import net.xdclass.vo.BannerDTO;
 import net.xdclass.service.BannerService;
 import net.xdclass.util.JsonData;
 import org.springframework.web.bind.annotation.GetMapping;

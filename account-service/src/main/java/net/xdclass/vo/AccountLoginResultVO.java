@@ -1,4 +1,4 @@
-package net.xdclass.dto;
+package net.xdclass.vo;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class AccountLoginResultDTO {
+public class AccountLoginResultVO {
 
     private boolean success;
 

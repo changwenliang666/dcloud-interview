@@ -87,3 +87,11 @@ aliyun:
     public-endpoint: oss-cn-beijing.aliyuncs.com    # 公开bucket访问域名
     public-bucket-name: mockmate-pub         # 公开访问的存储桶（头像/题图）
     public-domain: https://mockmate-pub.oss-cn-beijing.aliyuncs.com/ # 公开访问域名
+
+wechat:
+  login:
+    app-id: ${WECHAT_APP_ID}
+    app-secret: ${WECHAT_APP_SECRET}
+    qr-code-expire-time: 120
+    login-state-expire-time: 300
+    token: ${WECHAT_TOKEN}

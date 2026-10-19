@@ -3,7 +3,7 @@ package net.xdclass.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import net.xdclass.dto.BannerDTO;
+import net.xdclass.vo.BannerDTO;
 import net.xdclass.enums.BizCodeEnum;
 import net.xdclass.exception.BizException;
 import net.xdclass.mapper.BannerMapper;

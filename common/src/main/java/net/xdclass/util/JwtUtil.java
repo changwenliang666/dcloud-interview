@@ -5,7 +5,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SecureDigestAlgorithm;
 import lombok.extern.slf4j.Slf4j;
-import net.xdclass.dto.AccountDTO;
+import net.xdclass.vo.AccountDTO;
 
 import javax.crypto.SecretKey;
 import java.util.Date;

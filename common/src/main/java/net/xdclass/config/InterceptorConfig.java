@@ -24,6 +24,8 @@ public class InterceptorConfig implements WebMvcConfigurer {
                         "/api/v1/account/send-check-code",
                         "/api/v1/banner/*",
                         // 微信登录相关接口
+                        "/api/v1/get-access-token",
+                        "/api/v1/wechat/get-wechat-user-scan-result",
                         "/api/v1/wechat/qrcode",
                         "/api/v1/wechat/qrcode/status",
                         "/api/v1/wechat/login/result",
