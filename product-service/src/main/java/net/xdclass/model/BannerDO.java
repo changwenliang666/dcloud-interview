@@ -21,11 +21,12 @@ import lombok.Setter;
 @Getter
 @Setter
 @TableName("banner")
-@Schema(name = "BannerDO", description = "")
+@Schema(name = "BannerDO", description = "Banner表")
 public class BannerDO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @Schema(description = "主键")
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
@@ -53,9 +54,11 @@ public class BannerDO implements Serializable {
     @TableField("status")
     private String status;
 
+    @Schema(description = "创建时间")
     @TableField("gmt_create")
     private Date gmtCreate;
 
+    @Schema(description = "更新时间")
     @TableField("gmt_modified")
     private Date gmtModified;
 }

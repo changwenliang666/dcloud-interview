@@ -1,6 +1,7 @@
 package net.xdclass.util;
 
 import com.alibaba.fastjson2.JSON;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,20 +18,16 @@ import net.xdclass.enums.BizCodeEnum;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Schema(name = "JsonData", description = "统一响应")
 public class JsonData {
 
-    /**
-     * 状态码 0 表示成功
-     */
-
+    @Schema(description = "状态码，0表示成功")
     private Integer code;
-    /**
-     * 数据
-     */
+
+    @Schema(description = "响应数据")
     private Object data;
-    /**
-     * 描述
-     */
+
+    @Schema(description = "描述")
     private String msg;
 
     /**

@@ -1,8 +1,10 @@
 package net.xdclass.vo;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -11,7 +13,7 @@ import java.util.Date;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-
+@Schema(name = "AccountDTO", description = "账号传输对象")
 public class AccountDTO implements Serializable {
 
     @Schema(description = "用户ID")
@@ -26,6 +28,7 @@ public class AccountDTO implements Serializable {
     @Schema(description = "电话号码")
     private String phone;
 
+    @Schema(description = "头像")
     private String headImg;
 
     @Schema(description = "状态：ON，OFF")
@@ -44,6 +47,5 @@ public class AccountDTO implements Serializable {
     private Date gmtCreate;
 
     @Schema(description = "更新时间")
-    @TableField("gmt_modified")
     private Date gmtModified;
 }

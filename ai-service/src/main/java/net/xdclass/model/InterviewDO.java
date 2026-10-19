@@ -22,12 +22,13 @@ import lombok.Setter;
 @Getter
 @Setter
 @TableName("interview")
-@Schema(name = "InterviewDO", description = "")
+@Schema(name = "InterviewDO", description = "面试表")
 public class InterviewDO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-      @TableId(value = "id", type = IdType.AUTO)
+    @Schema(description = "面试ID")
+    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
     @Schema(description = "面试标题")
@@ -106,9 +107,11 @@ public class InterviewDO implements Serializable {
     @TableField("excellent_question")
     private Integer excellentQuestion;
 
+    @Schema(description = "创建时间")
     @TableField("gmt_create")
     private Date gmtCreate;
 
+    @Schema(description = "更新时间")
     @TableField("gmt_modified")
     private Date gmtModified;
 }

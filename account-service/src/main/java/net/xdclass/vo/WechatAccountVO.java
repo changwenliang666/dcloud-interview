@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Schema(name = "WechatAccountDTO", description = "微信用户信息")
+@Schema(name = "WechatAccountVO", description = "微信用户信息")
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor

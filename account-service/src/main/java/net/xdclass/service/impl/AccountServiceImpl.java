@@ -5,10 +5,11 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.client.SmsClient;
 import net.xdclass.config.RedisKeyManager;
-import net.xdclass.controller.rq.AccountLoginReq;
-import net.xdclass.controller.rq.SendCheckCodeRq;
+import net.xdclass.controller.req.AccountLoginReq;
+import net.xdclass.controller.req.SendCheckCodeReq;
 import net.xdclass.vo.AccountDTO;
 import net.xdclass.vo.AccountLoginResultVO;
+import net.xdclass.vo.AccountVO;
 import net.xdclass.vo.SmsDTO;
 import net.xdclass.enums.AccountRoleEnum;
 import net.xdclass.enums.BizCodeEnum;
@@ -66,7 +67,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public JsonData sendCheckCode(SendCheckCodeRq req) {
+    public JsonData sendCheckCode(SendCheckCodeReq req) {
         // 校验图形验证码是否正确
         try {
             captchaUtil.verifyCaptcha(req.getIdentifier(), req.getCaptcha(), req.getType());
@@ -147,8 +148,11 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public List<AccountDO> getAllUser(String status) {
-        return accountMapper.selectList(new LambdaQueryWrapper<AccountDO>().eq(AccountDO::getStatus,status));
+    public List<AccountVO> getAllUser(String status) {
+        return accountMapper.selectList(new LambdaQueryWrapper<AccountDO>().eq(AccountDO::getStatus, status))
+                .stream()
+                .map(account -> SpringBeanUtil.copyProperties(account, AccountVO.class))
+                .toList();
     }
 
     @Override

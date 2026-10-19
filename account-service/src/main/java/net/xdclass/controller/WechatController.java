@@ -1,6 +1,7 @@
 package net.xdclass.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -82,12 +83,12 @@ public class WechatController {
      * 用于验证微信服务器
      */
     @GetMapping("/callback/verify")
-    @Operation(summary = "微信服务器验证", description = "微信服务器验证接口")
+    @Operation(summary = "微信服务器验证", description = "微信服务器验证接口，校验通过后原样返回 echostr")
     public String verifyWechatServer(
-            @RequestParam("signature") String signature,
-            @RequestParam("timestamp") String timestamp,
-            @RequestParam("nonce") String nonce,
-            @RequestParam("echostr") String echostr) {
+            @Parameter(description = "微信加密签名", required = true) @RequestParam("signature") String signature,
+            @Parameter(description = "时间戳", required = true) @RequestParam("timestamp") String timestamp,
+            @Parameter(description = "随机数", required = true) @RequestParam("nonce") String nonce,
+            @Parameter(description = "随机字符串", required = true) @RequestParam("echostr") String echostr) {
 
         log.info("微信服务器验证请求：signature={}, timestamp={}, nonce={}, echostr={}",
                 signature, timestamp, nonce, echostr);
@@ -108,6 +109,7 @@ public class WechatController {
      * @return
      */
 
+    @Operation(summary = "微信扫码回调", description = "接收微信服务器推送的扫码、关注和取消关注事件")
     @PostMapping("/callback/verify")
     public void verifyWechatScanCallBack(HttpServletRequest request) {
         try {
@@ -143,19 +145,22 @@ public class WechatController {
         }
     }
 
+    @Operation(summary = "获取微信访问令牌", description = "获取并返回当前可用的 access_token")
     @GetMapping("/get-access-token")
     public JsonData getAccessToken() {
         String accessToken = wechatService.getAccessToken();
         return JsonData.buildSuccess(accessToken);
     }
 
+    @Operation(summary = "生成登录二维码", description = "生成微信扫码登录二维码")
     @GetMapping("/qrcode")
     public JsonData generateQrCode() {
         return wechatService.generateQrCode();
     }
 
+    @Operation(summary = "查询扫码登录结果", description = "根据场景值查询用户是否已扫码确认")
     @GetMapping("/get-wechat-user-scan-result")
-    public JsonData getWechatUserScanResult(@RequestParam("sceneId") String sceneId) {
+    public JsonData getWechatUserScanResult(@Parameter(description = "二维码场景值", required = true) @RequestParam("sceneId") String sceneId) {
         return wechatService.getWechatUserScanResult(sceneId);
     }
 }

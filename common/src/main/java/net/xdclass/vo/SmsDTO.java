@@ -1,5 +1,6 @@
 package net.xdclass.vo;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,14 +10,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Schema(name = "SmsDTO", description = "短信发送参数")
 public class SmsDTO {
-    /**
-     * 接收短信的手机号码
-     */
+
+    @Schema(description = "接收短信的手机号码")
     private String mobile;
 
-    /**
-     * 模板参数，格式如:12345
-     */
+    @Schema(description = "模板参数，格式如12345")
     private String code;
 }
