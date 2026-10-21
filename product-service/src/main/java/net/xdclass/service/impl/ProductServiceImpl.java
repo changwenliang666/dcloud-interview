@@ -13,29 +13,41 @@ import net.xdclass.util.SpringBeanUtil;
 import net.xdclass.vo.BenefitVO;
 import net.xdclass.vo.PackageBenefitVO;
 import net.xdclass.vo.ProductPackageVO;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 public class ProductServiceImpl implements ProductService {
-    @Autowired
-    private BenefitMapper benefitMapper;
-    @Autowired
-    private PackageBenefitMapper packageBenefitMapper;
-    @Autowired
-    private ProductPackageMapper productPackageMapper;
+    private final BenefitMapper benefitMapper;
+    private final PackageBenefitMapper packageBenefitMapper;
+    private final ProductPackageMapper productPackageMapper;
+
+    public ProductServiceImpl(BenefitMapper benefitMapper, PackageBenefitMapper packageBenefitMapper, ProductPackageMapper productPackageMapper) {
+        this.benefitMapper = benefitMapper;
+        this.packageBenefitMapper = packageBenefitMapper;
+        this.productPackageMapper = productPackageMapper;
+    }
 
     @Override
     public List<BenefitVO> getBenefit() {
         LambdaQueryWrapper<BenefitDO> queryWrapper = new LambdaQueryWrapper<BenefitDO>()
                 .eq(BenefitDO::getStatus, StatusEnum.ON.name());
         return SpringBeanUtil.copyProperties(benefitMapper.selectList(queryWrapper), BenefitVO.class);
+    }
+
+    @Override
+    public BenefitVO getBenefitById(Long id) {
+        LambdaQueryWrapper<BenefitDO> queryWrapper = new LambdaQueryWrapper<BenefitDO>().eq(BenefitDO::getId, id);
+        BenefitDO benefitDO = benefitMapper.selectOne(queryWrapper);
+        BenefitVO benefitVO = null;
+        if (benefitDO != null) {
+            benefitVO = SpringBeanUtil.copyProperties(benefitDO, BenefitVO.class);
+        }
+        return benefitVO;
     }
 
     @Override
@@ -51,6 +63,25 @@ public class ProductServiceImpl implements ProductService {
         }).toList();
     }
 
+    /**
+     * 根据套餐id查询套餐信息
+     * @param id
+     * @return
+     */
+    @Override
+    public ProductPackageVO getPackageById(Long id) {
+        LambdaQueryWrapper<ProductPackageDO> queryWrapper = new LambdaQueryWrapper<ProductPackageDO>().eq(ProductPackageDO::getId,id);
+        ProductPackageVO productPackageVO = null;
+        ProductPackageDO productPackageDO = productPackageMapper.selectOne(queryWrapper);
+        if(productPackageDO != null) {
+            productPackageVO = SpringBeanUtil.copyProperties(productPackageDO,ProductPackageVO.class);
+        }
+        return productPackageVO;
+    }
+
+    /**
+     * 查出某个套餐包含哪些权益，次数来自关联表，名称价格等来自权益表
+     */
     private List<PackageBenefitVO> listPackageBenefit(Long packageId) {
         List<PackageBenefitDO> relationList = packageBenefitMapper.selectList(
                 new LambdaQueryWrapper<PackageBenefitDO>()
@@ -60,23 +91,28 @@ public class ProductServiceImpl implements ProductService {
             return List.of();
         }
 
-        List<String> benefitCodeList = relationList.stream().map(PackageBenefitDO::getBenefitCode).toList();
-        Map<String, BenefitDO> benefitMap = benefitMapper.selectList(
-                new LambdaQueryWrapper<BenefitDO>().in(BenefitDO::getBenefitCode, benefitCodeList)
-        ).stream().collect(Collectors.toMap(BenefitDO::getBenefitCode, Function.identity(), (left, right) -> left));
-
-        return relationList.stream()
-                .map(relation -> toPackageBenefitVO(relation, benefitMap.get(relation.getBenefitCode())))
-                .filter(Objects::nonNull)
-                .toList();
-    }
-
-    private PackageBenefitVO toPackageBenefitVO(PackageBenefitDO relation, BenefitDO benefit) {
-        if (benefit == null) {
-            return null;
+        List<String> benefitCodeList = new ArrayList<>();
+        for (PackageBenefitDO relation : relationList) {
+            benefitCodeList.add(relation.getBenefitCode());
         }
-        PackageBenefitVO vo = SpringBeanUtil.copyProperties(benefit, PackageBenefitVO.class);
-        vo.setCount(relation.getCount());
-        return vo;
+        List<BenefitDO> benefitList = benefitMapper.selectList(
+                new LambdaQueryWrapper<BenefitDO>().in(BenefitDO::getBenefitCode, benefitCodeList)
+        );
+        Map<String, BenefitDO> benefitMap = new HashMap<>();
+        for (BenefitDO benefit : benefitList) {
+            benefitMap.put(benefit.getBenefitCode(), benefit);
+        }
+
+        List<PackageBenefitVO> resultList = new ArrayList<>();
+        for (PackageBenefitDO relation : relationList) {
+            BenefitDO benefit = benefitMap.get(relation.getBenefitCode());
+            if (benefit == null) {
+                continue;
+            }
+            PackageBenefitVO vo = SpringBeanUtil.copyProperties(benefit, PackageBenefitVO.class);
+            vo.setCount(relation.getCount());
+            resultList.add(vo);
+        }
+        return resultList;
     }
 }

@@ -40,6 +40,10 @@ public enum BizCodeEnum {
     BENEFIT_NOT_ENOUGH(110017, "权益不足"),
 
     /**
+     * 套餐
+     */
+    PACKAGE_NOT_EXIST(110018,"套餐不存在"),
+    /**
      * 微信登录二维码状态
      *
      */
@@ -70,6 +74,7 @@ public enum BizCodeEnum {
 
     //订单
     ORDER_NO_EXIST(110012, "订单不存在"),
+    ORDER_ADD_FAIL(110013,"创建订单失败"),
 
     NO_PERMISSION(403001,"权限不够"),
 

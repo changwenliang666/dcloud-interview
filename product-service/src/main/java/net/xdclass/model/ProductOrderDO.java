@@ -8,6 +8,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,6 +22,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@Builder
 @TableName("product_order")
 @Schema(name = "ProductOrderDO", description = "购买订单表")
 public class ProductOrderDO implements Serializable {

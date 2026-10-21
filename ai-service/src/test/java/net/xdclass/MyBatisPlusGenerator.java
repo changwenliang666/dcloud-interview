@@ -1,4 +1,4 @@
-package xdclass.net.db;
+package net.xdclass;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.generator.FastAutoGenerator;

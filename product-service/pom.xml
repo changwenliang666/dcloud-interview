@@ -23,6 +23,11 @@
             <groupId>net.xdclass</groupId>
             <artifactId>common</artifactId>
         </dependency>
+        <!-- 微信支付 SDK 商品服务-->
+        <dependency>
+            <groupId>com.github.wechatpay-apiv3</groupId>
+            <artifactId>wechatpay-java</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

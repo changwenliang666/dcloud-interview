@@ -1,5 +1,6 @@
 package net.xdclass.controller;
 
+import io.swagger.v3.core.util.Json;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import net.xdclass.service.ProductService;
@@ -7,6 +8,7 @@ import net.xdclass.util.JsonData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "商品", description = "权益与套餐查询")
@@ -28,4 +30,10 @@ public class ProductController {
     public JsonData getPackageBenefit() {
         return JsonData.buildSuccess(productService.getPackageBenefit());
     }
+
+    @GetMapping("/get-benefit-by-id")
+    public JsonData getBenefitById(@RequestParam(value = "id") Long id) {
+        return JsonData.buildSuccess(productService.getBenefitById(id));
+    }
+
 }
