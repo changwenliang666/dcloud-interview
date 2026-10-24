@@ -40,8 +40,8 @@ public class InterceptorConfig implements WebMvcConfigurer {
                         "/api/v1/product/package/detail",
                         "/api/v1/product/benefit/detail",
                         // 支付回调接口（不需要登录）
-                        "/api/v1/order/callback/wechat_pay",
-                        "/api/v1/order/callback/alipay",
+                        "/api/v1/product-order/callback/wechat_pay",
+                        "/api/v1/product-order/callback/alipay",
                         // 静态资源
                         "/favicon.ico",
                         "/error")

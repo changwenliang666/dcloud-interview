@@ -1,7 +1,9 @@
 package net.xdclass.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.wechat.pay.java.service.payments.model.Transaction;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.controller.req.ProductBenefitOrderReq;
 import net.xdclass.controller.req.ProductOrderPageReq;
@@ -20,10 +22,13 @@ import net.xdclass.util.WechatPayUtil;
 import net.xdclass.vo.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -78,6 +83,55 @@ public class ProductOrderServiceImpl implements net.xdclass.service.ProductOrder
         return JsonData.buildSuccess(payInfoVO);
     }
 
+    private ProductOrderVO selectByOutTradeNo(String outTradeNo) {
+        ProductOrderDO productOrderDO = productOrderMapper.selectOne(
+                new LambdaQueryWrapper<ProductOrderDO>()
+                        .eq(ProductOrderDO::getOutTradeNo, outTradeNo)
+        );
+        return productOrderDO == null ? null : SpringBeanUtil.copyProperties(productOrderDO, ProductOrderVO.class);
+    }
+
+    /**
+     * 更新订单状态为指定状态，带幂等检查和数据库级 CAS 保障
+     */
+    private Integer updateOrderState(String outTradeNo, String transactionNo, String newState) {
+        ProductOrderVO orderVO = selectByOutTradeNo(outTradeNo);
+        if (orderVO == null) {
+            log.warn("订单不存在，无法更新状态，订单号：{}", outTradeNo);
+            return 0;
+        }
+        if (newState.equals(orderVO.getOrderState())) {
+            log.info("订单{}已是{}状态，跳过", outTradeNo, newState);
+            return 0;  // 已是目标状态，视为成功（幂等）
+        }
+
+        // 数据库级 CAS：避免并发回调或超时任务同时更新导致的状态覆盖
+        int updated = productOrderMapper.update(null,
+                new LambdaUpdateWrapper<ProductOrderDO>()
+                        .set(ProductOrderDO::getTransactionNo, transactionNo)
+                        .set(ProductOrderDO::getOrderState, newState)
+                        .set(OrderStateEnum.PAY.name().equals(newState), ProductOrderDO::getNotifyTime, new Date())
+                        .eq(ProductOrderDO::getOutTradeNo, outTradeNo)
+                        .notIn(ProductOrderDO::getOrderState, newState)); // 排除目标状态，防止重复更新
+
+        if (updated > 0) {
+            log.info("订单状态已更新，订单号：{}，新状态：{}", outTradeNo, newState);
+            return updated;
+        } else {
+            log.warn("订单状态更新失败（可能已被其他线程更新），订单号：{}，目标状态：{}", outTradeNo, newState);
+            return updated;
+        }
+    }
+
+    /**
+     * 构建微信回调失败响应
+     */
+    private String buildFailResponse(String message) {
+        return "{\"code\":\"FAIL\",\"message\":\"" + message + "\"}";
+    }
+
+    private static final String WECHAT_CALLBACK_SUCCESS = "{\"code\":\"SUCCESS\",\"message\":\"成功\"}";
+
     @Override
     public JsonData createBenefitOrder(ProductBenefitOrderReq req) {
         //生成订单编号
@@ -111,16 +165,7 @@ public class ProductOrderServiceImpl implements net.xdclass.service.ProductOrder
 
             return handlePayment(productOrderDO, req.getPaymentType());
         } catch (Exception e) {
-            log.error("创建订单失败", e);
-            ProductOrderDO productOrderDO = productOrderMapper.selectOne(new LambdaQueryWrapper<ProductOrderDO>().eq(ProductOrderDO::getOutTradeNo, outTradeNo));
-            if (productOrderDO != null) {
-                int rows = productOrderMapper.deleteById(productOrderDO.getId());
-                if (rows < 1) {
-                    log.error("创建订单数据回滚失败");
-                }
-                log.info("订单数据已从数据库删除");
-            }
-
+            log.error("创建订单异常", e);
             return JsonData.buildCodeAndMsg(BizCodeEnum.ORDER_ADD_FAIL.getCode(), BizCodeEnum.ORDER_ADD_FAIL.getMessage());
         }
     }
@@ -157,25 +202,16 @@ public class ProductOrderServiceImpl implements net.xdclass.service.ProductOrder
 
             return handlePayment(productOrderDO, req.getPaymentType());
         } catch (Exception e) {
-            log.error("创建订单失败", e);
-            ProductOrderDO productOrderDO = productOrderMapper.selectOne(new LambdaQueryWrapper<ProductOrderDO>().eq(ProductOrderDO::getOutTradeNo, outTradeNo));
-            if (productOrderDO != null) {
-                int rows = productOrderMapper.deleteById(productOrderDO.getId());
-                if (rows < 1) {
-                    log.error("创建订单数据回滚失败");
-                }
-                log.info("订单数据已从数据库删除");
-            }
-
+            log.error("创建订单异常", e);
             return JsonData.buildCodeAndMsg(BizCodeEnum.ORDER_ADD_FAIL.getCode(), BizCodeEnum.ORDER_ADD_FAIL.getMessage());
         }
     }
 
     @Override
     public ProductOrderVO getOrderStatusByOutTradeNo(String outTradeNo) {
-        LambdaQueryWrapper<ProductOrderDO> queryWrapper = new LambdaQueryWrapper<ProductOrderDO>().eq(ProductOrderDO::getOutTradeNo,outTradeNo).eq(ProductOrderDO::getAccountId,getCurrentAccountId());
-         ProductOrderDO productOrderDO = productOrderMapper.selectOne(queryWrapper);
-      return productOrderDO != null ? SpringBeanUtil.copyProperties(productOrderDO,ProductOrderVO.class) : null;
+        LambdaQueryWrapper<ProductOrderDO> queryWrapper = new LambdaQueryWrapper<ProductOrderDO>().eq(ProductOrderDO::getOutTradeNo, outTradeNo).eq(ProductOrderDO::getAccountId, getCurrentAccountId());
+        ProductOrderDO productOrderDO = productOrderMapper.selectOne(queryWrapper);
+        return productOrderDO != null ? SpringBeanUtil.copyProperties(productOrderDO, ProductOrderVO.class) : null;
     }
 
     @Override
@@ -193,5 +229,50 @@ public class ProductOrderServiceImpl implements net.xdclass.service.ProductOrder
         List<ProductOrderVO> orderList = SpringBeanUtil.copyProperties(resultPage.getRecords(), ProductOrderVO.class);
         log.info("分页查询订单成功, accountId:{}, total:{}", accountId, resultPage.getTotal());
         return CommonUtil.convertToPageMap(resultPage, orderList);
+    }
+
+    @Override
+    public ResponseEntity<String> handleWechatPayCallback(String timestamp, String nonce, String signature, String signType, String serialNumber, String body) {
+
+        Transaction transaction = wechatPayUtil.parseCallbackNotification(timestamp, nonce, signature, signType, serialNumber, body);
+        if (transaction == null) {
+            log.error("解析微信回调异常");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(buildFailResponse("解析微信回调异常"));
+        }
+
+        String outTradeNo = transaction.getOutTradeNo();
+        Transaction.TradeStateEnum tradeState = transaction.getTradeState();
+        log.info("微信回调, outTradeNo:{}, tradeState:{}", outTradeNo, tradeState);
+        ProductOrderVO productOrderVO = selectByOutTradeNo(outTradeNo);
+        if (productOrderVO == null) {
+            log.error("订单不存在, outTradeNo:{}", outTradeNo);
+            //验证微信回调通过，不返回任何内容
+            return ResponseEntity.ok(WECHAT_CALLBACK_SUCCESS);
+        }
+
+        if (Transaction.TradeStateEnum.SUCCESS.equals(tradeState)) {
+            //检查数据库是否已经更新
+            if (productOrderVO.getOrderState().equals(OrderStateEnum.PAY.name())) {
+                log.warn("订单已支付, outTradeNo:{}", outTradeNo);
+                return ResponseEntity.ok(WECHAT_CALLBACK_SUCCESS);
+            }
+            //更新数据库
+            Integer updated = updateOrderState(outTradeNo, transaction.getTransactionId(), OrderStateEnum.PAY.name());
+            if (updated > 0) {
+                log.info("更新订单成功, outTradeNo:{}", outTradeNo);
+            } else {
+                log.warn("更新订单失败, outTradeNo:{}", outTradeNo);
+            }
+
+        } else if (!OrderStateEnum.PAY.name().equals(productOrderVO.getOrderState())) {
+            Integer updated = updateOrderState(outTradeNo, transaction.getTransactionId(), OrderStateEnum.CANCEL.name());
+            if (updated < 1) {
+                log.info("订单未支付成功, outTradeNo:{}", outTradeNo);
+            } else {
+                log.warn("更新订单失败，冲突或者不存在, outTradeNo:{}", outTradeNo);
+            }
+        }
+
+        return ResponseEntity.ok(WECHAT_CALLBACK_SUCCESS);
     }
 }

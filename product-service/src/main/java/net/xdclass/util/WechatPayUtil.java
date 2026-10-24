@@ -2,6 +2,7 @@ package net.xdclass.util;
 
 import com.wechat.pay.java.core.RSAPublicKeyConfig;
 import com.wechat.pay.java.core.notification.NotificationParser;
+import com.wechat.pay.java.core.notification.RequestParam;
 import com.wechat.pay.java.service.payments.model.Transaction;
 import com.wechat.pay.java.service.payments.nativepay.NativePayService;
 import com.wechat.pay.java.service.payments.nativepay.model.*;
@@ -10,6 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import net.xdclass.config.WechatPayConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Slf4j
 @Component
@@ -66,6 +70,8 @@ public class WechatPayUtil {
         request.setDescription(description);
         request.setOutTradeNo(outTradeNo);
         request.setNotifyUrl(wechatPayConfig.getNotifyUrl());
+        // 设置订单5分钟有效期，格式符合微信支付 RFC 3339 要求
+        request.setTimeExpire(OffsetDateTime.now().plusMinutes(5).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
         Amount reqAmount = new Amount();
         reqAmount.setTotal(amount.intValue());
@@ -110,6 +116,40 @@ public class WechatPayUtil {
         }catch (Exception e){
             log.error("关闭订单异常:{}",e);
             return false;
+        }
+    }
+    /**
+     * 解析微信支付回调通知
+     * 使用公钥模式的 NotificationParser 验签并解密回调数据
+     *
+     * @param timestamp    回调请求头 Wechatpay-Timestamp
+     * @param nonce        回调请求头 Wechatpay-Nonce
+     * @param signature    回调请求头 Wechatpay-Signature
+     * @param signType     回调请求头 Wechatpay-Signature-Type
+     * @param serialNumber 回调请求头 Wechatpay-Serial
+     * @param body         回调请求体
+     * @return 解析后的 Transaction 交易对象，解析失败返回null
+     */
+    public Transaction parseCallbackNotification(String timestamp, String nonce, String signature,
+                                                 String signType, String serialNumber, String body) {
+        try {
+            RequestParam requestParam = new RequestParam.Builder()
+                    .serialNumber(serialNumber)
+                    .nonce(nonce)
+                    .signature(signature)
+                    .timestamp(timestamp)
+                    .signType(signType)
+                    .body(body)
+                    .build();
+
+            Transaction transaction = notificationParser.parse(requestParam, Transaction.class);
+            log.info("解析微信支付回调成功，订单号：{}，状态：{}",
+                    transaction.getOutTradeNo(), transaction.getTradeState());
+            return transaction;
+
+        } catch (Exception e) {
+            log.error("解析微信支付回调失败", e);
+            return null;
         }
     }
 }
