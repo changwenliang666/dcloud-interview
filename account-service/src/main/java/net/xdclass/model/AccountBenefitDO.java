@@ -38,9 +38,18 @@ public class AccountBenefitDO implements Serializable {
     @TableField("benefit_code")
     private String benefitCode;
 
+    @Schema(description = "权益id")
+    @TableField("benefit_id")
+    private String benefitId;
+
+
     @Schema(description = "来源订单ID")
     @TableField("product_order_id")
     private Long productOrderId;
+
+    @Schema(description = "来源订单类型")
+    @TableField("order_type")
+    private String orderType;
 
     @Schema(description = "剩余次数")
     @TableField("remaining_count")

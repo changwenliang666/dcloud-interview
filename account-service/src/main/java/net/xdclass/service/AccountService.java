@@ -2,8 +2,8 @@ package net.xdclass.service;
 
 import net.xdclass.controller.req.AccountLoginReq;
 import net.xdclass.controller.req.SendCheckCodeReq;
-import net.xdclass.vo.AccountLoginResultVO;
-import net.xdclass.vo.AccountVO;
+import net.xdclass.dto.AccountLoginResultVO;
+import net.xdclass.dto.AccountVO;
 import net.xdclass.util.JsonData;
 import org.springframework.web.multipart.MultipartFile;
 

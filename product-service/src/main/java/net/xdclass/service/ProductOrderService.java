@@ -4,7 +4,7 @@ import net.xdclass.controller.req.ProductBenefitOrderReq;
 import net.xdclass.controller.req.ProductOrderPageReq;
 import net.xdclass.controller.req.ProductPackageOrderReq;
 import net.xdclass.util.JsonData;
-import net.xdclass.vo.ProductOrderVO;
+import net.xdclass.dto.ProductOrderVO;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Map;
@@ -20,4 +20,5 @@ public interface ProductOrderService {
 
     ResponseEntity<String> handleWechatPayCallback(String timestamp, String nonce, String signature,
                                                    String signType, String serialNumber, String body);
+    void handleTimeoutOrder(ProductOrderVO productOrderVO);
 }

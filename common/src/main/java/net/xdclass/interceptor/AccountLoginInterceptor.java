@@ -4,7 +4,7 @@ import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import net.xdclass.vo.AccountDTO;
+import net.xdclass.dto.AccountDTO;
 import net.xdclass.enums.BizCodeEnum;
 import net.xdclass.util.CommonUtil;
 import net.xdclass.util.JsonData;

@@ -7,7 +7,9 @@
         <id column="id" property="id" />
         <result column="account_id" property="accountId" />
         <result column="benefit_code" property="benefitCode" />
+        <result column="benefit_id" property="benefitId" />
         <result column="product_order_id" property="productOrderId" />
+        <result column="order_type" property="orderType"/>
         <result column="remaining_count" property="remainingCount" />
         <result column="total_count" property="totalCount" />
         <result column="start_time" property="startTime" />
@@ -18,7 +20,7 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id, account_id, benefit_code, product_order_id, remaining_count, total_count, start_time, end_time, gmt_create, gmt_modified
+        id, account_id, benefit_code,benefit_id,product_order_id,order_type,remaining_count, total_count, start_time, end_time, gmt_create, gmt_modified
     </sql>
 
 </mapper>

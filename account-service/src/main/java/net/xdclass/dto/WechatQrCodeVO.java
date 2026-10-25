@@ -1,4 +1,4 @@
-package net.xdclass.vo;
+package net.xdclass.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

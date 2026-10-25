@@ -1,4 +1,4 @@
-package net.xdclass.vo;
+package net.xdclass.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,7 +1,7 @@
 package net.xdclass.client;
 
 import lombok.extern.slf4j.Slf4j;
-import net.xdclass.vo.SmsDTO;
+import net.xdclass.dto.SmsDTO;
 import net.xdclass.enums.BizCodeEnum;
 import net.xdclass.util.HttpUtil;
 import net.xdclass.util.JsonData;

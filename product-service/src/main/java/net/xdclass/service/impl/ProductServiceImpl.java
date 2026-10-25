@@ -10,9 +10,9 @@ import net.xdclass.model.PackageBenefitDO;
 import net.xdclass.model.ProductPackageDO;
 import net.xdclass.service.ProductService;
 import net.xdclass.util.SpringBeanUtil;
-import net.xdclass.vo.BenefitVO;
-import net.xdclass.vo.PackageBenefitVO;
-import net.xdclass.vo.ProductPackageVO;
+import net.xdclass.dto.BenefitVO;
+import net.xdclass.dto.PackageBenefitVO;
+import net.xdclass.dto.ProductPackageVO;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -75,6 +75,10 @@ public class ProductServiceImpl implements ProductService {
         ProductPackageDO productPackageDO = productPackageMapper.selectOne(queryWrapper);
         if(productPackageDO != null) {
             productPackageVO = SpringBeanUtil.copyProperties(productPackageDO,ProductPackageVO.class);
+            List<PackageBenefitVO> packageBenefitVOS = listPackageBenefit(id);
+            if(!packageBenefitVOS.isEmpty()) {
+                productPackageVO.setBenefitList(packageBenefitVOS);
+            }
         }
         return productPackageVO;
     }

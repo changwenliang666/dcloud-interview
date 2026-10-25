@@ -1,8 +1,7 @@
 package net.xdclass.service;
 
-import net.xdclass.vo.BenefitVO;
-import net.xdclass.vo.PackageBenefitVO;
-import net.xdclass.vo.ProductPackageVO;
+import net.xdclass.dto.BenefitVO;
+import net.xdclass.dto.ProductPackageVO;
 
 import java.util.List;
 

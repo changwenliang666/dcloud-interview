@@ -1,6 +1,6 @@
 package net.xdclass.service;
 
-import net.xdclass.vo.BannerVO;
+import net.xdclass.dto.BannerVO;
 
 import java.util.List;
 

@@ -10,7 +10,7 @@ import net.xdclass.controller.req.SendCheckCodeReq;
 import net.xdclass.service.AccountService;
 import net.xdclass.util.CaptchaUtil;
 import net.xdclass.util.JsonData;
-import net.xdclass.vo.AccountLoginResultVO;
+import net.xdclass.dto.AccountLoginResultVO;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;

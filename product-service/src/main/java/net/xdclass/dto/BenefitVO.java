@@ -1,4 +1,4 @@
-package net.xdclass.vo;
+package net.xdclass.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -8,32 +8,37 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.List;
 
 /**
- * 套餐列表展示对象
+ * 权益列表展示对象
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(name = "ProductPackageVO", description = "套餐信息")
-public class ProductPackageVO {
+@Schema(name = "BenefitVO", description = "权益信息")
+public class BenefitVO {
 
-    @Schema(description = "套餐ID")
+    @Schema(description = "权益ID")
     private Long id;
 
-    @Schema(description = "套餐名称")
+    @Schema(description = "权益名称")
     private String name;
 
-    @Schema(description = "套餐描述")
+    @Schema(description = "权益编码")
+    private String benefitCode;
+
+    @Schema(description = "权益描述")
     private String description;
 
-    @Schema(description = "套餐价格")
-    private BigDecimal price;
+    @Schema(description = "单次价格")
+    private BigDecimal unitPrice;
 
-    @Schema(description = "有效期(天)")
+    @Schema(description = "单次有效期(天)")
     private Integer validDays;
+
+    @Schema(description = "是否热门")
+    private Boolean isHot;
 
     @Schema(description = "是否推荐")
     private Boolean isRecommended;
@@ -49,7 +54,4 @@ public class ProductPackageVO {
 
     @Schema(description = "更新时间")
     private Date gmtModified;
-
-    @Schema(description = "套餐包含的权益")
-    private List<PackageBenefitVO> benefitList;
 }
