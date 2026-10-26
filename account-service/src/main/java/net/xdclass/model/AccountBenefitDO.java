@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.util.Date;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,6 +22,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @TableName("account_benefit")
+@Builder
 @Schema(name = "AccountBenefitDO", description = "用户权益表")
 public class AccountBenefitDO implements Serializable {
 
@@ -40,7 +42,7 @@ public class AccountBenefitDO implements Serializable {
 
     @Schema(description = "权益id")
     @TableField("benefit_id")
-    private String benefitId;
+    private Long benefitId;
 
 
     @Schema(description = "来源订单ID")

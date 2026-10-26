@@ -51,8 +51,6 @@ public class ProductOrderServiceImpl implements net.xdclass.service.ProductOrder
     private ProductOrderMQConfig productOrderMQConfig;
     @Autowired
     private BenefitMapper benefitMapper;
-    @Autowired
-    private BenefitGrantMQConfig benefitGrantMQConfig;
 
 
     // 获取账号id
@@ -364,17 +362,18 @@ public class ProductOrderServiceImpl implements net.xdclass.service.ProductOrder
             BenefitGrantMessage benefitGrantMessage = BenefitGrantMessage
                     .builder()
                     .outTradeNo(orderDO.getOutTradeNo())
-                    .accountId(getCurrentAccountId())
+                    .accountId(orderDO.getAccountId())
                     .orderId(orderDO.getId())
                     .orderType(orderDO.getOrderType())
                     .benefitItems(List.of(benefitItem))
                     .build();
 
+
             rabbitTemplate.convertAndSend(BenefitGrantMQConfig.BENEFIT_GRANT_EXCHANGE, BenefitGrantMQConfig.BENEFIT_GRANT_ROUTING_KEY, benefitGrantMessage);
-            log.info("单权益发放消息已发送, outTradeNo:{}, benefitId:{}", orderDO.getOutTradeNo(), benefitDO.getId());
+            log.info("单权益发放消息已发送, outTradeNo:{}, benefitId:{}，交换机:{},路由:{}", orderDO.getOutTradeNo(), benefitDO.getId(),BenefitGrantMQConfig.BENEFIT_GRANT_EXCHANGE,BenefitGrantMQConfig.BENEFIT_GRANT_ROUTING_KEY);
 
         } catch (Exception e) {
-            log.error("单权益发放消息已发送, outTradeNo:{}, benefitId:{}", orderDO.getOutTradeNo(), benefitDO.getId());
+            log.error("单权益发放消息发送失败, outTradeNo:{}, benefitId:{}", orderDO.getOutTradeNo(), benefitDO.getId(),e);
         }
     }
 
@@ -438,7 +437,7 @@ public class ProductOrderServiceImpl implements net.xdclass.service.ProductOrder
             }
 
             // 没订阅不发放权益
-            if (!productOrderDO.getPayType().equals(OrderStateEnum.PAY.name())) {
+            if (!productOrderDO.getOrderState().equals(OrderStateEnum.PAY.name())) {
                 log.info("该订单未支付，订单编号:{}", outTradeNo);
                 return;
             }

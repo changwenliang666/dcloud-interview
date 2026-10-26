@@ -17,7 +17,6 @@ import org.springframework.context.annotation.Configuration;
  * 同时提供全局 JSON 消息转换器，供 product-service 和 account-service 使用
  */
 @Configuration
-@Data
 public class BenefitGrantMQConfig {
 
     // 权益发放交换机
