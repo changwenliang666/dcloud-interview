@@ -65,6 +65,12 @@ public enum BizCodeEnum {
     FILE_UPLOAD_USER_IMG_FAIL(110010, "用户头像文件上传失败"),
 
     /**
+     * 简历
+     */
+    RESUME_NOT_EXIST(250001, "简历不存在"),
+    RESUME_PREVIEW_FAIL(250002, "简历预览地址生成失败"),
+
+    /**
      * 数据库默认值
      */
     SYSTEM_ERROR(999999, "系统错误"),

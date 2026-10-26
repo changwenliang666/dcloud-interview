@@ -37,7 +37,7 @@ public class ProductOrderMQConfig {
     private String orderCloseRoutingKey = "order.close.delay.key";
 
     // 过期时间：6分钟
-    private Integer ttl = 1000 * 60;
+    private Integer ttl = 1000 * 60 * 6;
 
     /**
      * 创建交换机

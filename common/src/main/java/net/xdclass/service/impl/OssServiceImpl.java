@@ -149,8 +149,7 @@ public class OssServiceImpl implements OssService {
             if(bucket == null){
                 return null;
             }
-            String domainWithSlash = bucket.domainWithSlash();
-            return fileUrl.startsWith(domainWithSlash)?fileUrl.substring(domainWithSlash.length()):null;
+            return bucket.extractObjectKey(fileUrl);
         }catch (Exception e){
             log.error("无法从URL中提取文件Key：{}", fileUrl);
             return null;
@@ -175,13 +174,15 @@ public class OssServiceImpl implements OssService {
                 return null;
             }
 
-            if(bucket.isPublicBucket()){
-                return fileUrl;
+            String fileKey = extractFileKey(fileUrl);
+            if (StringUtils.isBlank(fileKey)) {
+                log.warn("无法从URL中提取文件Key：{}", fileUrl);
+                return null;
             }
 
-
-            String fileKey = extractFileKey(fileUrl);
-
+            if(bucket.isPublicBucket()){
+                return bucket.buildFileKey(fileKey);
+            }
 
             // 配置过期时间
             Date expiration = new Date(System.currentTimeMillis() + PREVIEW_URL_EXPIRATION_MILLIS);
@@ -191,7 +192,7 @@ public class OssServiceImpl implements OssService {
             request.setExpiration(expiration);
 
             URL generatePresignedUrl = bucket.getClient().generatePresignedUrl(request);
-            String presignedUrlString = generatePresignedUrl.toString();
+            String presignedUrlString = bucket.toAccessUrl(generatePresignedUrl);
             log.info("生成预览URL成功：{}", presignedUrlString);
             return presignedUrlString;
 

@@ -1,5 +1,6 @@
 package net.xdclass.config;
 
+import com.aliyun.oss.ClientBuilderConfiguration;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClientBuilder;
 import lombok.Data;
@@ -67,9 +68,14 @@ public class OssConfig {
 
     @Bean
     public OssClientManager ossClientManager() {
-        // 创建OSS客户端
-        OSS secureClient = new OSSClientBuilder().build(secureEndpoint, accessKeyId, accessKeySecret);
-        OSS publicClient = new OSSClientBuilder().build(publicEndpoint, accessKeyId, accessKeySecret);
+        // 自定义域名已绑定到 Bucket。ClientBuilderConfiguration 默认关闭 CNAME，
+        // 签名 URL 会拼成 {bucket}.{自定义域名}，例如 mockmate-pri.pri-file.mockmate.asia。
+        // 官方域名 oss-*.aliyuncs.com 在排除列表中，仍会按虚拟主机方式拼接 bucket。
+        ClientBuilderConfiguration secureConfig = buildClientConfiguration();
+        ClientBuilderConfiguration publicConfig = buildClientConfiguration();
+
+        OSS secureClient = new OSSClientBuilder().build(normalizeEndpoint(secureEndpoint), accessKeyId, accessKeySecret, secureConfig);
+        OSS publicClient = new OSSClientBuilder().build(normalizeEndpoint(publicEndpoint), accessKeyId, accessKeySecret, publicConfig);
 
         //创建对应的私有buket客户端
         OssClientManager.BucketClient secureBucket = new OssClientManager.BucketClient(secureClient, secureBucketName, secureDomain, false);
@@ -77,6 +83,26 @@ public class OssConfig {
         OssClientManager.BucketClient publicBucket = new OssClientManager.BucketClient(publicClient, publicBucketName, publicDomain, true);
 
         return new OssClientManager(secureBucket, publicBucket);
+    }
+
+    private ClientBuilderConfiguration buildClientConfiguration() {
+        ClientBuilderConfiguration configuration = new ClientBuilderConfiguration();
+        configuration.setSupportCname(true);
+        return configuration;
+    }
+
+    /**
+     * 去掉末尾斜杠，避免 endpoint 的 path 变成 "/" 后被拼进请求地址。
+     */
+    private String normalizeEndpoint(String endpoint) {
+        if (endpoint == null) {
+            return null;
+        }
+        String value = endpoint.trim();
+        while (value.endsWith("/")) {
+            value = value.substring(0, value.length() - 1);
+        }
+        return value;
     }
 
 
