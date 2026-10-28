@@ -7,6 +7,14 @@ spring:
         server-addr: ${NACOS_SERVER}
         username: ${NACOS_USER}
         password: ${NACOS_PASSWORD}
+  ai:
+    dashscope:
+      api-key: ${QWEN_MODEL_API_KEY}
+      chat:
+        options:
+          model: qwen-max      # 模型选择，可选 qwen-plus、qwen-turbo
+          temperature: 0.7       # 创造性（0-1，越高越随机）
+          max-tokens: 2048       # 最大输出 Token 数
 
   rabbitmq:
     host: ${RABBITMQ_SERVER}
@@ -41,6 +49,11 @@ spring:
       host: ${REDIS_SERVER}
       port: 6379
       password: ${REDIS_PASSWORD}
+
+logging:
+  level:
+    org.springframework.ai.chat.client.advisor: debug
+
 #  锁配置 防止不同环境争抢一把锁
 lock:
   prefix-key: dev
@@ -87,3 +100,13 @@ aliyun:
     public-endpoint: http://pub-file.mockmate.asia/    # 公开bucket访问域名
     public-bucket-name: mockmate-pub         # 公开访问的存储桶（头像/题图）
     public-domain: http://pub-file.mockmate.asia/ # 公开访问域名
+
+# SearXNG 搜索引擎配置
+searxng:
+  base-url: ${SEARXNG_BASE_URL} # SearXNG 服务地址（改为你的服务器IP）
+  # 返回格式，必须为 json
+  format: json
+  # 搜索语言
+  language: zh
+  # 搜索引擎（多个用逗号分隔，如：bing,google）
+  engines: quark

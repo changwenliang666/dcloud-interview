@@ -9,6 +9,7 @@
         <result column="account_benefit_id" property="accountBenefitId" />
         <result column="use_times" property="useTimes" />
         <result column="business_id" property="businessId" />
+        <result column="benefit_code" property="benefitCode"/>
         <result column="message_id" property="messageId" />
         <result column="lock_state" property="lockState" />
         <result column="gmt_create" property="gmtCreate" />

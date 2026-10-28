@@ -1,6 +1,8 @@
 package net.xdclass.service;
 
 import net.xdclass.dto.ResumeDTO;
+import net.xdclass.req.BenefitCheckReq;
+import net.xdclass.util.JsonData;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -28,4 +30,9 @@ public interface ResumeService {
      * 生成简历预览地址
      */
     String preview(Long id);
+
+    /**
+     * Ai 分析简历
+     */
+    JsonData analyse(BenefitCheckReq req);
 }

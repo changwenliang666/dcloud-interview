@@ -4,7 +4,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.xdclass.dto.AccountDTO;
 import net.xdclass.dto.ResumeDTO;
+import net.xdclass.enums.BenefitEnum;
+import net.xdclass.interceptor.AccountLoginInterceptor;
+import net.xdclass.req.BenefitCheckReq;
 import net.xdclass.service.ResumeService;
 import net.xdclass.util.JsonData;
 import org.springframework.http.MediaType;
@@ -61,6 +65,20 @@ public class ResumeController {
     public JsonData preview(@Parameter(description = "简历ID", required = true) @RequestParam("id") Long id) {
         log.info("预览简历, id:{}", id);
         return JsonData.buildSuccess(resumeService.preview(id));
+    }
+
+    @GetMapping("/analyse")
+    @Operation(summary = "ai分析简历", description = "根据简历id让ai进行分析")
+    public JsonData analyse(@RequestParam(value = "id") Long id) {
+        AccountDTO accountDTO = AccountLoginInterceptor.threadLocal.get();
+        BenefitCheckReq req = BenefitCheckReq.builder()
+                .accountId(accountDTO.getId())
+                .benefitCode(BenefitEnum.RESUME_ANALYSE.name())
+                .businessId(id)
+                .count(1)
+                .build();
+
+        return resumeService.analyse(req);
     }
 
 }

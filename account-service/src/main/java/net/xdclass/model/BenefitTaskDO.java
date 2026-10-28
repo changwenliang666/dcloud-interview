@@ -38,13 +38,17 @@ public class BenefitTaskDO implements Serializable {
     @TableField("account_benefit_id")
     private Long accountBenefitId;
 
+    @Schema(description = "权益编码")
+    @TableField("benefit_code")
+    private String benefitCode;
+
     @Schema(description = "使用次数(扣减次数)")
     @TableField("use_times")
     private Integer useTimes;
 
     @Schema(description = "关联业务ID(如面试ID)")
     @TableField("business_id")
-    private String businessId;
+    private Long businessId;
 
     @Schema(description = "消息唯一标识(UUID)")
     @TableField("message_id")

@@ -4,16 +4,22 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.dto.AccountDTO;
+import net.xdclass.dto.BenefitCheckResultDTO;
 import net.xdclass.dto.ResumeDTO;
 import net.xdclass.enums.BizCodeEnum;
 import net.xdclass.enums.ResumeStatus;
 import net.xdclass.exception.BizException;
+import net.xdclass.feign.AccountBenefitFeign;
 import net.xdclass.interceptor.AccountLoginInterceptor;
 import net.xdclass.mapper.ResumeMapper;
 import net.xdclass.model.ResumeDO;
+import net.xdclass.req.BenefitCheckReq;
 import net.xdclass.service.OssService;
 import net.xdclass.service.ResumeService;
+import net.xdclass.strategy.BenefitMessageStrategy;
+import net.xdclass.strategy.BenefitMessageStrategyFactory;
 import net.xdclass.util.FileUtil;
+import net.xdclass.util.JsonData;
 import net.xdclass.util.SpringBeanUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.Loader;
@@ -28,7 +34,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -37,6 +45,8 @@ public class ResumeServiceImpl implements ResumeService {
 
     private final OssService ossService;
     private final ResumeMapper resumeMapper;
+    private final AccountBenefitFeign accountBenefitFeign;
+    private final BenefitMessageStrategyFactory benefitMessageStrategyFactory;
 
 
     /**
@@ -172,7 +182,6 @@ public class ResumeServiceImpl implements ResumeService {
                 .eq(ResumeDO::getAccountId, accountId));
         if (resumeDO == null) {
             log.warn("简历不存在, id:{}, accountId:{}", id, accountId);
-            throw new BizException(BizCodeEnum.RESUME_NOT_EXIST);
         }
         return resumeDO;
     }
@@ -183,5 +192,58 @@ public class ResumeServiceImpl implements ResumeService {
             throw new BizException(BizCodeEnum.ACCOUNT_UNLOGIN);
         }
         return accountDTO.getId();
+    }
+
+    @Override
+    public JsonData analyse(BenefitCheckReq req) {
+        // 检查简历是否存在
+        ResumeDTO resumeDTO = findById(req.getBusinessId(), req.getAccountId());
+        if(resumeDTO == null) {
+            log.info("简历分析失败，简历不存在，简历id:{},用户id:{}",req.getBusinessId(),req.getAccountId());
+            return JsonData.buildError("简历不存在");
+        }
+        // 更新简历状态为分析中，仅非 IN_PROCESS 状态允许更新，避免重复分析
+        ResumeDO updateResume = ResumeDO.builder()
+                .status(ResumeStatus.IN_PROCESS.name())
+                .build();
+
+        LambdaQueryWrapper<ResumeDO> updateWrapper = new LambdaQueryWrapper<ResumeDO>()
+                .eq(ResumeDO::getId, resumeDTO.getId())
+                .eq(ResumeDO::getAccountId, req.getAccountId())
+                .ne(ResumeDO::getStatus,ResumeStatus.IN_PROCESS.name());
+
+        // 原子性更新简历状态，防止重复请求进入，造成简历被多次分析
+        int rows = resumeMapper.update(updateResume, updateWrapper);
+        if (rows <= 0) {
+            log.info("简历分析失败，简历正在分析中, 简历id:{}, 用户id:{}", req.getBusinessId(), req.getAccountId());
+            return JsonData.buildError("简历正在分析中");
+        }
+        // 检查并扣减权益
+        JsonData checkBenefitResult = accountBenefitFeign.checkAndDeductBenefit(req);
+        // 权益扣减失败
+        if(checkBenefitResult.getCode() != 0){
+            ResumeDO resumeDO = ResumeDO.builder().status(ResumeStatus.BENEFIT_NOT_ENOUGH.name()).build();
+            LambdaQueryWrapper<ResumeDO> resetWrapper = new LambdaQueryWrapper<ResumeDO>()
+                    .eq(ResumeDO::getId, resumeDTO.getId())
+                    .eq(ResumeDO::getAccountId, req.getAccountId());
+            resumeMapper.update(resumeDO,resetWrapper);
+            return JsonData.buildError("权益不足，分析简历失败");
+        }
+
+        // Step4: 解析扣减结果，获取messageId
+        BenefitCheckResultDTO deductResult = checkBenefitResult.getData(BenefitCheckResultDTO.class);
+        log.info("权益扣减成功，messageId={}", deductResult.getMessageId());
+
+        // Step5: 通过策略工厂发送业务MQ消息
+        BenefitMessageStrategy strategy = benefitMessageStrategyFactory.getStrategy(req.getBenefitCode());
+        strategy.sendBusinessMessage(deductResult.getMessageId(),req.getBusinessId(),req.getAccountId());
+
+
+        // Step6: 返回"分析中"状态（实际分析由MQ异步处理）
+        Map<String, Object> result = new HashMap<>();
+        result.put("resumeId", resumeDTO.getId());
+        result.put("status", "analysing");
+        result.put("message", "简历正在分析中，请稍候...");
+        return JsonData.buildSuccess(result);
     }
 }
