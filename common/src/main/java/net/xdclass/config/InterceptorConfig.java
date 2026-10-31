@@ -44,6 +44,10 @@ public class InterceptorConfig implements WebMvcConfigurer {
                         "/api/v1/product-order/callback/alipay",
                         // ai接口，暂时不拦截，方便测试
                         "/api/v1/ai/*/**",
+                        "/api/v1/account/benefit/checkAndDeduct",
+                        "/api/v1/account/benefit/task/updateStatus",
+                        "/api/v1/account/benefit/scheduleAnalyseDeadline",
+                        "/api/v1/resume/internal/**",
                         // 静态资源
                         "/favicon.ico",
                         "/error")

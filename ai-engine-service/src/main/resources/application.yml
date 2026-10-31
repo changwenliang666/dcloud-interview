@@ -1,0 +1,16 @@
+server:
+  port: 9004
+spring:
+  application:
+    name: ai-engine-service
+  profiles:
+    active: dev
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+ai:
+  engine:
+    callback-token: ${AI_ENGINE_CALLBACK_TOKEN:dev-callback-token}
+    callback-retry: 3

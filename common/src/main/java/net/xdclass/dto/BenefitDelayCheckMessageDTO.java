@@ -29,4 +29,7 @@ public class BenefitDelayCheckMessageDTO implements Serializable {
 
     @Schema(description = "检查级别：1-第1次检查(1分钟)，2-第2次检查(5分钟)")
     private Integer checkLevel;
+
+    @Schema(description = "查询失败后的重试次数")
+    private Integer retryCount;
 }

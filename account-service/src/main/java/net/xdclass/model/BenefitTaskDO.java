@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.util.Date;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,6 +22,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @TableName("benefit_task")
+@Builder
 @Schema(name = "BenefitTaskDO", description = "权益任务表(本地事务消息表)")
 public class BenefitTaskDO implements Serializable {
 

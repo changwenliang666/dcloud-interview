@@ -29,7 +29,7 @@
 | `common` | 公共依赖，以及后续的配置、常量、异常、模型、工具类、DTO |
 | `gateway` | API 网关 |
 | `account-service` | 账户服务，依赖 `common` |
-| `ai-service` | AI 面试相关能力，依赖 `common` |
+| `ai-business-service` | AI 面试相关能力，依赖 `common` |
 | `product-service` | 商品服务，依赖 `common` |
 
 ## 工程结构
